@@ -19,3 +19,8 @@ data/accounts_state.json
 # OS / editor
 .DS_Store
 streamlit.log
+
+# Local tooling / user-dropped source duplicates (canonical copies live in data/)
+.claude/
+Fleek - *.csv
+FLEEK_BUILD_PLAN.md
