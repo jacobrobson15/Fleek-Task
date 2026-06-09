@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Secrets — never commit the API key
+.streamlit/secrets.toml
+.env
+
+# Logs
+fleek_pipeline.log
+
+# Live/generated state (the frozen anchor + sources are committed; live is rebuilt)
+data/pipeline_live.csv
+data/_staging_pipeline.csv
+data/accounts_state.json
+
+# OS / editor
+.DS_Store
+streamlit.log
