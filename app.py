@@ -145,7 +145,41 @@ def build_fleek_data() -> dict:
                         track = a["channel"]
                         break
 
-                # Secondary track status line
+                # Find email and call actions for step/due data
+                email_action = next((a for a in actions if a.get("channel") == "email"), None)
+                call_action  = next((a for a in actions if a.get("channel") == "call"),  None)
+
+                email_step_n = email_action.get("step", 0) if email_action else (int(r.get("email_step") or 0) if r is not None else 0)
+                call_step_n  = call_action.get("step",  0) if call_action  else (int(r.get("call_step")  or 0) if r is not None else 0)
+
+                email_due_today = (track == "email")
+                call_due_today  = (track == "call")
+                has_phone_v = bool(phone and phone != "—")
+
+                def _due_label(due_date_val):
+                    if not isinstance(due_date_val, date):
+                        return ""
+                    days = (due_date_val - demo_today).days
+                    if days <= 0:   return "due today"
+                    if days == 1:   return "due tomorrow"
+                    if days < 7:    return f"due {due_date_val.strftime('%A')}"
+                    return f"due in {days} days"
+
+                email_due_label = "due today" if email_due_today else (
+                    _due_label(r.get("email_next_date")) if r is not None else "")
+                call_due_label = ("due today" if call_due_today else (
+                    _due_label(r.get("call_next_date")) if r is not None else "")) if has_phone_v else ""
+
+                def _sec_hdr(kind, step, total, due_label):
+                    h = f"{kind} · step {step} of {total}" if kind == "Email" else f"{kind} · attempt {step} of {total}"
+                    return h + (f" · {due_label}" if due_label else "")
+
+                email_sec_hdr = _sec_hdr("Email", email_step_n, 4, email_due_label)
+                call_sec_hdr  = _sec_hdr("Call", call_step_n, 2, call_due_label) if (has_phone_v and (call_action or call_step_n > 0)) else ""
+
+                raw_call_step = int(r.get("call_step") or 0) if r is not None else 0
+
+                due_line = actions[0]["label"] if actions else "Due today"
                 other_track = ""
                 first_seen = False
                 for a in actions:
@@ -155,8 +189,6 @@ def build_fleek_data() -> dict:
                         else:
                             other_track = a.get("label", "")
                             break
-
-                due_line = actions[0]["label"] if actions else "Due today"
 
                 shops_all.append({
                     "id": lid,
@@ -168,6 +200,16 @@ def build_fleek_data() -> dict:
                     "dueLine": due_line,
                     "draft": draft,
                     "otherTrack": other_track,
+                    "emailStep":      email_step_n,
+                    "callStep":       call_step_n,
+                    "emailDueToday":  email_due_today,
+                    "callDueToday":   call_due_today,
+                    "emailDueLabel":  email_due_label,
+                    "callDueLabel":   call_due_label,
+                    "emailSectionHdr": email_sec_hdr,
+                    "callSectionHdr":  call_sec_hdr,
+                    "callNotAttempted": (raw_call_step == 0),
+                    "why": card.get("why", ""),
                 })
 
             else:

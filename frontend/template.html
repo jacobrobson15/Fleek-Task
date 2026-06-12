@@ -327,93 +327,101 @@
           <div style="margin-top:14px">
             <sc-for list="{{ city.shops }}" as="shop" hint-placeholder-count="4">
               <div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:9px;overflow:hidden">
-                <!-- collapsed header — dual channel tags -->
+                <!-- collapsed header -->
                 <div onClick="{{ shop.toggle }}" style="padding:15px 18px;cursor:pointer">
                   <div style="display:flex;align-items:baseline;gap:8px">
                     <span style="font:600 15px Inter;color:#1A1A1A">{{ shop.store }}</span>
                     <span style="font:400 13px Inter;color:#A3A39E">{{ shop.city }}</span>
                   </div>
-                  <div style="display:flex;gap:18px;margin-top:10px;flex-wrap:wrap;align-items:baseline">
-                    <!-- email channel tag + due text -->
-                    <div style="display:flex;align-items:baseline;gap:7px">
-                      <span class="ch-tag ch-tag-primary">Email</span>
-                      <span style="font:400 12px Inter;color:#6B7280">{{ shop.emailDueText }}</span>
+                  <div style="display:flex;gap:28px;margin-top:10px;flex-wrap:wrap">
+                    <div>
+                      <span class="{{ shop.emailTagClass }}">{{ shop.emailTag }}</span>
+                      <div style="font:400 12px Inter;color:#6B7280;margin-top:4px">{{ shop.emailDueLabel }}</div>
                     </div>
-                    <!-- call channel tag + due text (if phone exists) -->
                     <sc-if value="{{ shop.shopHasCall }}">
-                      <div style="display:flex;align-items:baseline;gap:7px">
-                        <span class="ch-tag ch-tag-primary">Call</span>
-                        <span style="font:400 12px Inter;color:#6B7280">{{ shop.callDueText }}</span>
+                      <div>
+                        <span class="{{ shop.callTagClass }}">{{ shop.callTag }}</span>
+                        <div style="font:400 12px Inter;color:#9A9A95;margin-top:4px">{{ shop.callDueLabel }}</div>
                       </div>
+                    </sc-if>
+                    <sc-if value="{{ shop.noPhone }}">
+                      <div style="font:400 12.5px Inter;color:#BDBDB8;padding-top:3px">No phone — email only</div>
                     </sc-if>
                   </div>
                 </div>
                 <sc-if value="{{ shop.open }}">
-                  <div style="padding:0 18px 18px 18px;animation:fadein 0.15s ease">
+                  <div style="border-top:1px solid #F4F4F2;animation:fadein 0.15s ease">
 
                     <!-- EMAIL section -->
-                    <div style="font:600 11px Inter;color:#9A9A95;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px">Email</div>
-                    <sc-if value="{{ shop.isEmail }}">
-                      <!-- Email is primary track today -->
-                      <div style="background:#F6F6F5;border-radius:10px;padding:14px 16px;font:400 14px Inter;color:#33332F;line-height:1.6;white-space:pre-line">{{ shop.draft }}</div>
-                      <sc-if value="{{ shop.notCopied }}">
-                        <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
-                          <button onClick="{{ shop.copy }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Copy draft</button>
-                          <button onClick="{{ shop.markSent }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Mark sent</button>
-                          <button onClick="{{ shop.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
-                        </div>
+                    <div style="padding:16px 18px 0 18px">
+                      <div style="text-align:center;font:400 12px Inter;color:#A3A39E;margin-bottom:10px">{{ shop.emailSectionHdr }}</div>
+                      <sc-if value="{{ shop.hasContextLine }}">
+                        <div style="font:italic 400 13px Inter;color:#9A9A95;margin-bottom:12px">{{ shop.contextLine }}</div>
                       </sc-if>
-                      <sc-if value="{{ shop.copied }}">
-                        <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
-                          <button onClick="{{ shop.copy }}" style="background:#fff;color:#6B7280;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Copied ✓</button>
-                          <button onClick="{{ shop.markSent }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Mark sent</button>
-                          <button onClick="{{ shop.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
-                        </div>
-                      </sc-if>
-                    </sc-if>
-                    <sc-if value="{{ shop.isCall }}">
-                      <!-- Call is primary today; show email context from otherTrack -->
-                      <sc-if value="{{ shop.otherTrack }}">
-                        <div style="font:400 13px Inter;color:#A3A39E">{{ shop.otherTrack }}</div>
-                      </sc-if>
-                    </sc-if>
-
-                    <!-- CALL section (if phone exists) -->
-                    <sc-if value="{{ shop.shopHasCall }}">
-                      <div style="display:flex;align-items:center;gap:12px;margin:18px 0 14px">
-                        <div style="flex:1;height:1px;background:#F0F0EF"></div>
-                        <div style="font:600 11px Inter;color:#9A9A95;letter-spacing:0.08em;text-transform:uppercase">Call</div>
-                        <div style="flex:1;height:1px;background:#F0F0EF"></div>
-                      </div>
-                      <sc-if value="{{ shop.isCall }}">
-                        <!-- Call is primary track today -->
-                        <sc-if value="{{ shop.notAnswered }}">
-                          <a href="tel:{{ shop.phone }}" style="display:block;font:600 26px Inter;color:#1A1A1A;text-decoration:none;letter-spacing:-0.01em;padding:4px 0 2px">{{ shop.phone }}</a>
+                      <sc-if value="{{ shop.isEmail }}">
+                        <div style="background:#F6F6F5;border-radius:10px;padding:14px 16px;font:400 14px Inter;color:#33332F;line-height:1.6;white-space:pre-line">{{ shop.draft }}</div>
+                        <sc-if value="{{ shop.notCopied }}">
                           <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
-                            <button onClick="{{ shop.answeredAct }}" style="background:#1A1A1A;color:#fff;border:none;border-radius:8px;padding:9px 18px;font:500 14px Inter;cursor:pointer">Answered</button>
-                            <button onClick="{{ shop.noAnswer }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">No answer</button>
+                            <button onClick="{{ shop.copy }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Copy draft</button>
+                            <button onClick="{{ shop.markSent }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Mark sent</button>
+                            <button onClick="{{ shop.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
                           </div>
                         </sc-if>
-                        <sc-if value="{{ shop.answered }}">
-                          <div style="font:500 13px Inter;color:#6B7280;margin-bottom:10px">How did it go?</div>
-                          <div style="display:flex;flex-wrap:wrap;gap:8px">
-                            <sc-for list="{{ shop.callChips }}" as="chip" hint-placeholder-count="5">
+                        <sc-if value="{{ shop.copied }}">
+                          <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                            <button onClick="{{ shop.copy }}" style="background:#fff;color:#6B7280;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Copied ✓</button>
+                            <button onClick="{{ shop.markSent }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Mark sent</button>
+                            <button onClick="{{ shop.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
+                          </div>
+                        </sc-if>
+                        <sc-if value="{{ shop.replyClosed }}">
+                          <button onClick="{{ shop.replyToggle }}" style="width:100%;margin-top:12px;background:#fff;border:1px solid #E4E4E2;border-radius:8px;padding:11px;font:500 14px Inter;color:#1A1A1A;cursor:pointer">They replied…</button>
+                        </sc-if>
+                        <sc-if value="{{ shop.replyOpen }}">
+                          <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+                            <sc-for list="{{ shop.emailChips }}" as="chip" hint-placeholder-count="5">
                               <button onClick="{{ chip.onClick }}" style="background:#fff;border:1px solid #E4E4E2;border-radius:20px;padding:7px 14px;font:500 13px Inter;color:#1A1A1A;cursor:pointer">{{ chip.label }}</button>
                             </sc-for>
                           </div>
                         </sc-if>
                       </sc-if>
-                      <sc-if value="{{ shop.isEmail }}">
-                        <!-- Email is primary today; show call context from otherTrack + phone -->
-                        <sc-if value="{{ shop.otherTrack }}">
-                          <div style="font:400 13px Inter;color:#A3A39E;margin-bottom:8px">{{ shop.otherTrack }}</div>
+                    </div>
+
+                    <!-- CALL section -->
+                    <sc-if value="{{ shop.hasCallSection }}">
+                      <div style="display:flex;align-items:center;gap:12px;margin:16px 18px 0">
+                        <div style="flex:1;height:1px;background:#F0F0EF"></div>
+                      </div>
+                      <div style="padding:14px 18px 0 18px">
+                        <div style="text-align:center;font:400 12px Inter;color:#A3A39E;margin-bottom:10px">{{ shop.callSectionHdr }}</div>
+                        <sc-if value="{{ shop.callNotAttempted }}">
+                          <div style="font:400 13px Inter;color:#BDBDB8;margin-bottom:10px">Not yet attempted</div>
                         </sc-if>
-                        <a href="tel:{{ shop.phone }}" style="display:block;font:600 20px Inter;color:#6B7280;text-decoration:none;letter-spacing:-0.01em">{{ shop.phone }}</a>
-                      </sc-if>
+                        <sc-if value="{{ shop.isCall }}">
+                          <sc-if value="{{ shop.notAnswered }}">
+                            <a href="tel:{{ shop.phone }}" style="display:block;font:600 26px Inter;color:#1A1A1A;text-decoration:none;letter-spacing:-0.01em;padding:4px 0 2px">{{ shop.phone }}</a>
+                            <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                              <button onClick="{{ shop.answeredAct }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 18px;font:500 14px Inter;cursor:pointer">Answered</button>
+                              <button onClick="{{ shop.noAnswer }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">No answer</button>
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ shop.answered }}">
+                            <div style="font:500 13px Inter;color:#6B7280;margin-bottom:10px">How did it go?</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:8px">
+                              <sc-for list="{{ shop.callChips }}" as="chip" hint-placeholder-count="5">
+                                <button onClick="{{ chip.onClick }}" style="background:#fff;border:1px solid #E4E4E2;border-radius:20px;padding:7px 14px;font:500 13px Inter;color:#1A1A1A;cursor:pointer">{{ chip.label }}</button>
+                              </sc-for>
+                            </div>
+                          </sc-if>
+                        </sc-if>
+                        <sc-if value="{{ shop.isEmail }}">
+                          <a href="tel:{{ shop.phone }}" style="display:block;font:600 26px Inter;color:#1A1A1A;text-decoration:none;letter-spacing:-0.01em;padding:4px 0 2px">{{ shop.phone }}</a>
+                        </sc-if>
+                      </div>
                     </sc-if>
 
-                    <!-- Won / Lost — outcome controls, visually separated -->
-                    <div class="outcome-sep">
+                    <!-- Won / Lost -->
+                    <div style="margin:16px 18px 18px;padding-top:14px;border-top:1px solid #F4F4F2">
                       <div class="outcome-label">Outcome</div>
                       <div style="display:flex;gap:8px">
                         <button onClick="{{ shop.markWon }}" class="won-btn">Won</button>

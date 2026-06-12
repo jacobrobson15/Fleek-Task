@@ -232,22 +232,30 @@ class Component extends DCLogic {
     const s=this.S(item.id);
     const hasPhone=!!(item.phone&&item.phone!=='—');
     const emailPrimary=item.track!=='call';
-    // Collapsed card: show due text for each channel separately
-    const emailDueText=emailPrimary?item.dueLine:(item.otherTrack||'');
-    const callDueText=emailPrimary?(item.otherTrack||''):item.dueLine;
+    const emailTag=`EMAIL ${item.emailStep||0}/4`;
+    const callTag=`CALL ${item.callStep||0}/2`;
+    const emailTagClass=`ch-tag ${item.emailDueToday?'ch-tag-primary':'ch-tag-secondary'}`;
+    const callTagClass=`ch-tag ${item.callDueToday?'ch-tag-primary':'ch-tag-secondary'}`;
     const o={
-      id:item.id, store:item.store, city:item.city, dueLine:item.dueLine, phone:item.phone||'—', draft:item.draft, otherTrack:item.otherTrack,
+      id:item.id, store:item.store, city:item.city, phone:item.phone||'—', draft:item.draft,
       open:this.state.openS===item.id, toggle:()=>this.toggleS(item.id),
       isEmail:emailPrimary, isCall:!emailPrimary,
       copied:!!s.copied, notCopied:!s.copied,
       copy:()=>this.copyS(item.id,item.draft), markSent:()=>this.markSentS(item.id), skip:()=>this.skipS(item.id),
       answered:!!s.answered, notAnswered:!s.answered, answeredAct:()=>this.answeredS(item.id), noAnswer:()=>this.noAnswerS(item.id),
-      replyOpen:!!s.replyOpen, replyClosed:!s.replyOpen, replyText:s.replyText||'',
-      replyToggle:()=>this.replyToggleS(item.id), replyInput:e=>this.replyInputS(item.id,e.target.value),
+      replyOpen:!!s.replyOpen, replyClosed:!s.replyOpen,
+      replyToggle:()=>this.replyToggleS(item.id),
       callChips:['Visit booked','Interested — follow up','Not now','Wrong number','Lost'].map(l=>({label:l,onClick:()=>this.chipS(item.id,l,'call')})),
       emailChips:['Keep talking','Visit booked','Call booked','Not now','Lost'].map(l=>({label:l,onClick:()=>this.chipS(item.id,l,'email')})),
-      shopHasCall:hasPhone,
-      emailDueText, callDueText,
+      shopHasCall:hasPhone, noPhone:!hasPhone,
+      emailTag, callTag, emailTagClass, callTagClass,
+      emailDueLabel:item.emailDueLabel||'',
+      callDueLabel:item.callDueLabel||'',
+      emailSectionHdr:item.emailSectionHdr||'',
+      callSectionHdr:item.callSectionHdr||'',
+      callNotAttempted:!!item.callNotAttempted,
+      hasCallSection:!!(hasPhone&&item.callSectionHdr),
+      contextLine:item.why||'', hasContextLine:!!(item.why),
       markWon:()=>this.chipS(item.id,'Won','email'),
       markLost:()=>this.chipS(item.id,'Lost','email'),
     };
