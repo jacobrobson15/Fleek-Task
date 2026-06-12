@@ -29,8 +29,8 @@ PAUSED = "paused"
 def default_state() -> dict:
     return {
         "accounts": [
-            {"id": "Account 1", "status": ACTIVE, "cap": config.DM_DAILY_LIMIT,
-             "sent_today": 0},
+            {"id": "Account 1", "handle": "fleek_main", "status": ACTIVE,
+             "cap": config.DM_DAILY_LIMIT, "sent_today": 0},
         ],
         "demo_today": None,
     }

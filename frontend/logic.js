@@ -4,15 +4,9 @@ class Component extends DCLogic {
     page:'resellers', loaded: false,
     filter:null, openR:null, openS:null,
     showDoneR:false, showDoneS:false,
-    items:{}, accounts:{}, actedR:0, actedS:0,
-    removedIds:[], extraAccounts:[], showAddForm:false, newHandle:'', removeWarn:null,
+    items:{}, actedR:0, actedS:0,
+    igAccounts:[], showAddForm:false, newHandle:'', removeWarn:null,
   };
-
-  adminBase = [
-    {id:'ig_001', handle:'fleek_vintage_uk', cap:40, used:14, live:31},
-    {id:'ig_002', handle:'fleek_archive_eu', cap:40, used:20, live:12},
-    {id:'ig_003', handle:'fleek_sourcing',   cap:40, used:40, live:23},
-  ];
 
   componentDidMount(){
     const init=()=>{
@@ -22,15 +16,18 @@ class Component extends DCLogic {
       this.qOrder=order; this.numMap={}; order.forEach((id,i)=>this.numMap[id]=i+1);
       this.rmap={}; [...D.resellers.replies,...D.resellers.followups,...D.resellers.newout].forEach(x=>this.rmap[x.id]=x);
       this.sOrder=[]; this.smap={}; D.shops.cities.forEach(c=>c.shops.forEach(s=>{this.sOrder.push(s.id); this.smap[s.id]=s;}));
-      const accounts={}; D.accounts.forEach(a=>accounts[a.id]=a.used);
-      this.setState({loaded:true, accounts, openR:order[0]||null, openS:this.sOrder[0]||null});
+      const igAccounts=D.accounts.map(a=>({
+        id:a.id, handle:a.handle, cap:a.cap, sentToday:a.used,
+        midConvoCount:a.midConvoCount||0, status:a.status||'active',
+      }));
+      this.setState({loaded:true, igAccounts, openR:order[0]||null, openS:this.sOrder[0]||null});
     };
     if(window.FLEEK_DATA) init();
     window.addEventListener('fleekdata', init, {once:true});
     if(!window.FLEEK_DATA){let n=0;const t=setInterval(()=>{if(window.FLEEK_DATA){clearInterval(t);init();}else if(++n>60)clearInterval(t);},80);}
   }
 
-  acct(id){ return this.D.accounts.find(a=>a.id===id); }
+  acct(id){ return this.state.igAccounts.find(a=>a.id===id); }
   S(id){ return this.state.items[id]||{}; }
 
   nextActive(order, items, fromId){
@@ -39,23 +36,41 @@ class Component extends DCLogic {
     for(let k=0;k<order.length;k++){const it=items[order[k]]; if((!it||!it.terminal)&&order[k]!==fromId)return order[k];}
     return null;
   }
+
   // reseller
   toggleR(id){ this.setState(s=>({openR:s.openR===id?null:id})); }
   copyR(id,draft){ try{navigator.clipboard&&navigator.clipboard.writeText(draft);}catch(e){} this.setState(s=>({items:{...s.items,[id]:{...s.items[id],copied:true}}})); }
+
   markSentR(id,account){
     this.setState(s=>{
+      const igAccounts=[...s.igAccounts];
       const items={...s.items,[id]:{...s.items[id],terminal:true,result:'Sent'}};
-      const accounts={...s.accounts}; let acc=account;
-      if(!acc){ const free=this.D.accounts.filter(a=>accounts[a.id]<a.cap).sort((x,y)=>accounts[x.id]-accounts[y.id])[0]; acc=free?free.id:null; }
-      if(acc){ accounts[acc]=Math.min(accounts[acc]+1,this.acct(acc).cap); items[id].assigned=acc; items[id].result='Sent · @'+this.acct(acc).handle; }
-      return {items,accounts,openR:this.nextActive(this.qOrder,items,id),actedR:s.actedR+1};
+      let accId=account;
+      if(!accId){
+        // new outreach: pick lowest-used active account with remaining capacity
+        const free=igAccounts.filter(a=>a.status==='active'&&a.sentToday<a.cap)
+                             .sort((x,y)=>x.sentToday-y.sentToday)[0];
+        accId=free?free.id:null;
+      }
+      if(accId){
+        const idx=igAccounts.findIndex(a=>a.id===accId);
+        if(idx>=0){
+          igAccounts[idx]={...igAccounts[idx],sentToday:Math.min(igAccounts[idx].sentToday+1,igAccounts[idx].cap)};
+        }
+        items[id].assigned=accId;
+        const acc=idx>=0?igAccounts[idx]:null;
+        items[id].result='Sent · @'+(acc?acc.handle:accId);
+      }
+      return {items,igAccounts,openR:this.nextActive(this.qOrder,items,id),actedR:s.actedR+1};
     });
   }
+
   skipR(id){ this.setState(s=>{const items={...s.items,[id]:{...s.items[id],terminal:true,result:'Skipped'}};return {items,openR:this.nextActive(this.qOrder,items,id),actedR:s.actedR+1};}); }
   chipR(id,label){ this.setState(s=>{const items={...s.items,[id]:{...s.items[id],terminal:true,result:label}};return {items,openR:this.nextActive(this.qOrder,items,id),actedR:s.actedR+1};}); }
   replyToggleR(id){ this.setState(s=>({items:{...s.items,[id]:{...s.items[id],replyOpen:!(s.items[id]&&s.items[id].replyOpen)}}})); }
   replyInputR(id,v){ this.setState(s=>({items:{...s.items,[id]:{...s.items[id],replyText:v}}})); }
   replySaveR(id){ this.setState(s=>({items:{...s.items,[id]:{...s.items[id],replyOpen:false,inboundLogged:(s.items[id]&&s.items[id].replyText)||''}}})); }
+
   // shops
   toggleS(id){ this.setState(s=>({openS:s.openS===id?null:id})); }
   copyS(id,draft){ try{navigator.clipboard&&navigator.clipboard.writeText(draft);}catch(e){} this.setState(s=>({items:{...s.items,[id]:{...s.items[id],copied:true}}})); }
@@ -65,12 +80,13 @@ class Component extends DCLogic {
   noAnswerS(id){ this.setState(s=>{const items={...s.items,[id]:{...s.items[id],terminal:true,result:'No answer — next attempt scheduled'}};return {items,openS:this.nextActive(this.sOrder,items,id),actedS:s.actedS+1};}); }
   chipS(id,label,track){
     let result=label;
-    if(label==='Visit booked') result = track==='call'?'Closed — visit booked via call':'Closed — visit booked';
+    if(label==='Visit booked') result=track==='call'?'Closed — visit booked via call':'Closed — visit booked';
     else if(label==='Call booked') result='Closed — call booked';
     this.setState(s=>{const items={...s.items,[id]:{...s.items[id],terminal:true,result}};return {items,openS:this.nextActive(this.sOrder,items,id),actedS:s.actedS+1};});
   }
   replyToggleS(id){ this.setState(s=>({items:{...s.items,[id]:{...s.items[id],replyOpen:!(s.items[id]&&s.items[id].replyOpen)}}})); }
   replyInputS(id,v){ this.setState(s=>({items:{...s.items,[id]:{...s.items[id],replyText:v}}})); }
+
   // downloads
   downloadCSV(name,rows){
     const csv=rows.map(r=>r.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\n');
@@ -84,8 +100,15 @@ class Component extends DCLogic {
     this.downloadCSV('fleek_visit_'+city.toLowerCase()+'.csv',rows);
   }
   downloadActivityR(){
-    const rows=[['Handle','Action','Why']];
-    this.qOrder.forEach(id=>{const it=this.state.items[id]; if(it&&it.terminal){const m=this.rmap[id]; rows.push(['@'+m.handle,it.result,m.why]);}});
+    const rows=[['Handle','Action','Account','Why']];
+    this.qOrder.forEach(id=>{
+      const it=this.state.items[id];
+      if(it&&it.terminal){
+        const m=this.rmap[id];
+        const acc=it.assigned?this.acct(it.assigned):null;
+        rows.push(['@'+m.handle,it.result,acc?('@'+acc.handle):'',m.why]);
+      }
+    });
     this.downloadCSV('fleek_resellers_activity.csv',rows);
   }
   downloadActivityS(){
@@ -96,18 +119,18 @@ class Component extends DCLogic {
 
   buildAdminAccounts(){
     const st=this.state;
-    const all=[...this.adminBase,...st.extraAccounts].filter(a=>!st.removedIds.includes(a.id));
-    return all.map(a=>{
-      const isLimit=a.used>=a.cap;
-      const status=isLimit?'At limit':'Active';
-      const pillColor=isLimit?'#E8563A':'#6B7280';
+    return st.igAccounts.map(a=>{
+      const isLimit=a.sentToday>=a.cap;
+      const isPaused=a.status==='paused';
+      const status=isPaused?'Paused':isLimit?'At limit':'Active';
+      const pillColor=isPaused?'#9A9A95':isLimit?'#E8563A':'#6B7280';
       return {
-        id:a.id, handle:'@'+a.handle, usedStr:a.used+'/'+a.cap,
-        pct:Math.round(a.used/a.cap*100)+'%', status, pillColor, pillBg:'#F4F4F3', live:a.live||0,
+        id:a.id, handle:'@'+a.handle, usedStr:a.sentToday+'/'+a.cap,
+        pct:Math.round(a.sentToday/a.cap*100)+'%', status, pillColor, pillBg:'#F4F4F3', live:a.midConvoCount||0,
         warn:st.removeWarn===a.id,
-        warnText:(a.live||0)+' leads are mid-conversation on this account. They will be flagged for review — nothing is reassigned.',
+        warnText:(a.midConvoCount||0)+' leads are mid-conversation on this account. They will be flagged for review — nothing is reassigned.',
         onRemove:()=>this.setState({removeWarn:a.id}),
-        confirmRemove:()=>this.setState(s=>({removeWarn:null,removedIds:[...s.removedIds,a.id]})),
+        confirmRemove:()=>this.setState(s=>({removeWarn:null,igAccounts:s.igAccounts.filter(x=>x.id!==a.id)})),
         cancelRemove:()=>this.setState({removeWarn:null}),
       };
     });
@@ -128,13 +151,18 @@ class Component extends DCLogic {
     if(item.band==='reply') r.chips=['Keep talking','Call booked','Not now','Wrong person','Lost'].map(l=>({label:l,onClick:()=>this.chipR(item.id,l)}));
     return r;
   }
+
   groupByAccount(items){
     const active=items.filter(it=>!this.S(it.id).terminal);
     const filt=this.state.filter?active.filter(it=>it.account===this.state.filter):active;
     const groups=[];
-    this.D.accounts.forEach(a=>{const rows=filt.filter(it=>it.account===a.id).map(it=>this.mkRow(it)); if(rows.length)groups.push({key:a.id,label:'Sending from @'+a.handle,rows});});
+    this.state.igAccounts.forEach(a=>{
+      const rows=filt.filter(it=>it.account===a.id).map(it=>this.mkRow(it));
+      if(rows.length) groups.push({key:a.id,label:'Sending from @'+a.handle,rows});
+    });
     return {groups,count:filt.length};
   }
+
   mkShop(item){
     const s=this.S(item.id);
     const o={
@@ -153,11 +181,16 @@ class Component extends DCLogic {
   }
 
   acctView(a){
-    const used=this.state.accounts[a.id], isLimit=used>=a.cap;
-    return { id:a.id, handle:'@'+a.handle, used, cap:a.cap, usedStr:used+'/'+a.cap, pct:Math.round(used/a.cap*100)+'%',
-      status:isLimit?'At limit':'Active', pillColor:isLimit?'#E8563A':'#6B7280', pillBg:isLimit?'#FBF1EE':'#F4F4F3',
-      ring:this.state.filter===a.id?'#E8563A':'#EDEDEB', active:this.state.filter===a.id,
-      onClick:()=>this.setState(s=>({filter:s.filter===a.id?null:a.id})) };
+    const isLimit=a.sentToday>=a.cap, isPaused=a.status==='paused';
+    const status=isPaused?'Paused':isLimit?'At limit':'Active';
+    return {
+      id:a.id, handle:'@'+a.handle, used:a.sentToday, cap:a.cap, usedStr:a.sentToday+'/'+a.cap,
+      pct:Math.round(a.sentToday/a.cap*100)+'%',
+      status, pillColor:isPaused?'#9A9A95':isLimit?'#E8563A':'#6B7280',
+      pillBg:isLimit?'#FBF1EE':'#F4F4F3',
+      ring:this.state.filter===a.id?'#E8563A':'#EDEDEB',
+      onClick:()=>this.setState(s=>({filter:s.filter===a.id?null:a.id}))
+    };
   }
 
   renderVals(){
@@ -171,23 +204,28 @@ class Component extends DCLogic {
       tabRUnderline:st.page==='resellers'?'inset 0 -2px 0 #E8563A':'none',
       tabSUnderline:st.page==='shops'?'inset 0 -2px 0 #E8563A':'none',
     };
-    // accounts (reseller bar)
-    v.accounts=D.accounts.map(a=>this.acctView(a));
+
+    // accounts bar — reads from shared igAccounts (same source as Admin)
+    v.accounts=st.igAccounts.map(a=>this.acctView(a));
     v.hasFilter=!!st.filter;
-    v.filterLabel=st.filter?('@'+this.acct(st.filter).handle):'';
+    const filterAcc=st.igAccounts.find(a=>a.id===st.filter);
+    v.filterLabel=filterAcc?('@'+filterAcc.handle):'';
     v.clearFilter=()=>this.setState({filter:null});
+
     // bands
     const reply=this.groupByAccount(D.resellers.replies);
     const fu=this.groupByAccount(D.resellers.followups);
     const newActive=D.resellers.newout.filter(it=>!this.S(it.id).terminal);
+    // new outreach is hidden when an account filter is active (it's unassigned)
     const newFilt=st.filter?[]:newActive;
     v.replyGroups=reply.groups; v.replyCount=reply.count; v.replyHas=reply.count>0;
     v.fuGroups=fu.groups; v.fuCount=fu.count; v.fuHas=fu.count>0;
     v.newGroups=newFilt.length?[{key:'u',label:'Unassigned · load-balances to free budget',rows:newFilt.map(it=>this.mkRow(it))}]:[];
     v.newCount=newFilt.length; v.newHas=newFilt.length>0;
     v.allCaughtR=(reply.count+fu.count+newFilt.length)===0;
+
     // progress + done
-    const totalR=D.resellers.doneStart + (D.resellers.replies.length+D.resellers.followups.length+D.resellers.newout.length);
+    const totalR=D.resellers.doneStart+(D.resellers.replies.length+D.resellers.followups.length+D.resellers.newout.length);
     v.progressTextR=(D.resellers.doneStart+st.actedR)+' of '+totalR+' done today';
     v.doneCountR=D.resellers.doneStart+st.actedR;
     v.showActivityR=st.actedR>0;
@@ -196,6 +234,7 @@ class Component extends DCLogic {
     v.doneRowsR=this.qOrder.filter(id=>this.S(id).terminal).map(id=>({handle:'@'+this.rmap[id].handle,result:this.S(id).result}));
     v.doneEarlierR=D.resellers.doneStart+' completed earlier today';
     v.downloadR=()=>this.downloadActivityR();
+
     // shops
     v.cities=D.shops.cities.map(c=>{
       const shops=c.shops.filter(it=>!this.S(it.id).terminal).map(it=>this.mkShop(it));
@@ -211,6 +250,7 @@ class Component extends DCLogic {
     v.doneRowsS=this.sOrder.filter(id=>this.S(id).terminal).map(id=>({store:this.smap[id].store,result:this.S(id).result}));
     v.doneEarlierS=D.shops.doneStart+' completed earlier today';
     v.downloadS=()=>this.downloadActivityS();
+
     // admin
     v.admin={
       showAddForm:st.showAddForm, showAddBtn:!st.showAddForm,
@@ -221,7 +261,21 @@ class Component extends DCLogic {
       saveAccount:()=>{
         const h=(st.newHandle||'').replace(/^@/,'').trim(); if(!h)return;
         const id='ig_'+String(Date.now()).slice(-4);
-        this.setState(s=>({extraAccounts:[...s.extraAccounts,{id,handle:h,cap:40,used:0,live:0}],showAddForm:false,newHandle:''}));
+        this.setState(s=>({
+          igAccounts:[...s.igAccounts,{id,handle:h,cap:40,sentToday:0,midConvoCount:0,status:'active'}],
+          showAddForm:false,newHandle:'',
+        }));
+      },
+      resetDemo:()=>{
+        const igAccounts=this.D.accounts.map(a=>({
+          id:a.id, handle:a.handle, cap:a.cap, sentToday:a.used,
+          midConvoCount:a.midConvoCount||0, status:a.status||'active',
+        }));
+        this.setState({
+          igAccounts, items:{}, actedR:0, actedS:0, filter:null,
+          openR:this.qOrder[0]||null, openS:this.sOrder[0]||null,
+          showDoneR:false, showDoneS:false,
+        });
       },
     };
     v.adminAccounts=this.buildAdminAccounts();

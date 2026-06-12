@@ -62,6 +62,17 @@ def build_fleek_data() -> dict:
 
     # ── Accounts ──────────────────────────────────────────────────────────
     acct_rows = state["accounts_state"]["accounts"]
+
+    # Mid-conversation count per account (reply_needed + follow_ups_due)
+    mid_convo: dict = {}
+    if "assigned_account" in df.columns:
+        active_bands = ["reply_needed", "follow_ups_due"]
+        for a in acct_rows:
+            aid = a["id"]
+            mask = (df["assigned_account"].astype(str) == str(aid)) & \
+                   (df["band"].isin(active_bands))
+            mid_convo[aid] = int(mask.sum())
+
     accounts_data = []
     for a in acct_rows:
         used = int(a.get("sent_today", 0))
@@ -77,10 +88,11 @@ def build_fleek_data() -> dict:
             status = "Active"
         accounts_data.append({
             "id": a["id"],
-            "handle": a["id"],
+            "handle": a.get("handle", a["id"]),
             "used": used,
             "cap": cap,
             "status": status,
+            "midConvoCount": mid_convo.get(a["id"], 0),
         })
 
     # ── Classify cards into reseller bands and shop list ──────────────────

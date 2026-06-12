@@ -441,6 +441,15 @@
           <div onClick="{{ admin.addAccount }}" style="border:1.5px dashed #D9D9D5;border-radius:12px;padding:15px 16px;display:flex;align-items:center;justify-content:center;min-height:90px;cursor:pointer;font:500 14px Inter;color:#9A9A95">+ Add account</div>
         </sc-if>
       </div>
+
+      <!-- Reset demo -->
+      <div style="margin-top:32px;padding-top:24px;border-top:1px solid #F0F0EF;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font:500 13px Inter;color:#9A9A95">Reset demo</div>
+          <div style="font:400 12px Inter;color:#BDBDB8;margin-top:2px">Restores accounts, sent counts, and pipeline to original state</div>
+        </div>
+        <button onClick="{{ admin.resetDemo }}" style="background:#fff;color:#6B7280;border:1px solid #E4E4E2;border-radius:8px;padding:7px 13px;font:500 13px Inter;cursor:pointer;flex-shrink:0">Reset demo</button>
+      </div>
     </sc-if>
 
   </div>
