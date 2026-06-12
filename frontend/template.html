@@ -343,7 +343,9 @@
                   <div style="display:flex;gap:28px;margin-top:10px;flex-wrap:wrap">
                     <div>
                       <span class="{{ shop.emailTagClass }}">{{ shop.emailTag }}</span>
-                      <div style="font:400 12px Inter;color:#6B7280;margin-top:4px">{{ shop.emailDueLabel }}</div>
+                      <sc-if value="{{ shop.emailDueLabel }}">
+                        <div style="font:400 12px Inter;color:#6B7280;margin-top:4px">{{ shop.emailDueLabel }}</div>
+                      </sc-if>
                     </div>
                     <sc-if value="{{ shop.shopHasCall }}">
                       <div>
@@ -355,15 +357,41 @@
                       <div style="font:400 12.5px Inter;color:#BDBDB8;padding-top:3px">No phone — email only</div>
                     </sc-if>
                   </div>
+                  <sc-if value="{{ shop.hasLastInbound }}">
+                    <div style="font:italic 400 13px Inter;color:#9A9A95;margin-top:8px">"{{ shop.lastInbound }}"</div>
+                  </sc-if>
                 </div>
                 <sc-if value="{{ shop.open }}">
                   <div style="border-top:1px solid #F4F4F2;animation:fadein 0.15s ease">
 
+                    <!-- Reply inbound message -->
+                    <sc-if value="{{ shop.hasLastInbound }}">
+                      <div style="border-left:3px solid #E8563A;background:#FDF5F3;border-radius:0 8px 8px 0;padding:10px 14px;margin:14px 18px 0;font:italic 400 14px Inter;color:#5A3A35;line-height:1.5">"{{ shop.lastInbound }}"</div>
+                    </sc-if>
+
                     <!-- EMAIL section -->
                     <div style="padding:16px 18px 0 18px">
-                      <div style="text-align:center;font:400 12px Inter;color:#A3A39E;margin-bottom:10px">{{ shop.emailSectionHdr }}</div>
+                      <sc-if value="{{ shop.notReplyBand }}">
+                        <div style="text-align:center;font:400 12px Inter;color:#A3A39E;margin-bottom:10px">{{ shop.emailSectionHdr }}</div>
+                      </sc-if>
                       <sc-if value="{{ shop.hasContextLine }}">
                         <div style="font:italic 400 13px Inter;color:#9A9A95;margin-bottom:12px">{{ shop.contextLine }}</div>
+                      </sc-if>
+                      <!-- Reply band: show reply draft instead of sequence-continuation UI -->
+                      <sc-if value="{{ shop.hasReplyDraft }}">
+                        <div style="background:#F6F6F5;border-radius:10px;padding:14px 16px;font:400 14px Inter;color:#33332F;line-height:1.6;white-space:pre-line">{{ shop.draft }}</div>
+                        <sc-if value="{{ shop.notCopied }}">
+                          <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                            <button onClick="{{ shop.copy }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Copy draft</button>
+                            <button onClick="{{ shop.markSent }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Mark sent</button>
+                          </div>
+                        </sc-if>
+                        <sc-if value="{{ shop.copied }}">
+                          <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                            <button onClick="{{ shop.copy }}" style="background:#fff;color:#6B7280;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Copied ✓</button>
+                            <button onClick="{{ shop.markSent }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Mark sent</button>
+                          </div>
+                        </sc-if>
                       </sc-if>
                       <sc-if value="{{ shop.isEmail }}">
                         <div style="background:#F6F6F5;border-radius:10px;padding:14px 16px;font:400 14px Inter;color:#33332F;line-height:1.6;white-space:pre-line">{{ shop.draft }}</div>

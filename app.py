@@ -201,6 +201,7 @@ def build_fleek_data() -> dict:
                     "phone": phone,
                     "track": track,
                     "band": band,
+                    "lastInbound": last_inb,
                     "warm": False,
                     "dueLine": due_line,
                     "draft": draft,

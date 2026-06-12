@@ -236,14 +236,22 @@ class Component extends DCLogic {
     const s=this.S(item.id);
     const hasPhone=!!(item.phone&&item.phone!=='—');
     const emailPrimary=item.track!=='call';
+    const isReplyBand=item.band==='reply_needed';
     const emailTag=`EMAIL ${Math.min((item.emailStep||0)+1,4)}/4`;
     const callTag=`CALL ${Math.min((item.callStep||0)+1,2)}/2`;
-    const emailTagClass=`ch-tag ${item.emailDueToday?'ch-tag-primary':'ch-tag-secondary'}`;
-    const callTagClass=`ch-tag ${item.callDueToday?'ch-tag-primary':'ch-tag-secondary'}`;
+    // Reply band: grey out tags (sequence paused), clear due labels
+    const emailTagClass=`ch-tag ${(!isReplyBand&&item.emailDueToday)?'ch-tag-primary':'ch-tag-secondary'}`;
+    const callTagClass=`ch-tag ${(!isReplyBand&&item.callDueToday)?'ch-tag-primary':'ch-tag-secondary'}`;
+    const emailDueLabel=isReplyBand?'':(item.emailDueLabel||'');
+    const callDueLabel=isReplyBand?'':(item.callDueLabel||'');
+    const lastInbound=item.lastInbound||'';
+    const hasLastInbound=!!(isReplyBand&&lastInbound);
     const o={
       id:item.id, store:item.store, city:item.city, phone:item.phone||'—', draft:item.draft,
       open:this.state.openS===item.id, toggle:()=>this.toggleS(item.id),
-      isEmail:!!item.emailDueToday, isCall:!!(item.callDueToday&&hasPhone),
+      isEmail:!isReplyBand&&!!item.emailDueToday, isCall:!isReplyBand&&!!(item.callDueToday&&hasPhone),
+      isReplyBand, notReplyBand:!isReplyBand, lastInbound, hasLastInbound,
+      hasReplyDraft:!!(isReplyBand&&item.draft),
       copied:!!s.copied, notCopied:!s.copied,
       copy:()=>this.copyS(item.id,item.draft), markSent:()=>this.markSentS(item.id), skip:()=>this.skipS(item.id),
       answered:!!s.answered, notAnswered:!s.answered, answeredAct:()=>this.answeredS(item.id), noAnswer:()=>this.noAnswerS(item.id),
@@ -251,11 +259,10 @@ class Component extends DCLogic {
       replyToggle:()=>this.replyToggleS(item.id),
       callChips:['Visit booked','Interested — follow up','Not now','Wrong number','Lost'].map(l=>({label:l,onClick:()=>this.chipS(item.id,l,'call')})),
       emailChips:['Keep talking','Visit booked','Call booked','Not now','Lost'].map(l=>({label:l,onClick:()=>this.chipS(item.id,l,'email')})),
-      shopHasCall:hasPhone, noPhone:!hasPhone,
+      shopHasCall:hasPhone&&!isReplyBand, noPhone:!hasPhone,
       band: item.band||'new_outreach',
       emailTag, callTag, emailTagClass, callTagClass,
-      emailDueLabel:item.emailDueLabel||'',
-      callDueLabel:item.callDueLabel||'',
+      emailDueLabel, callDueLabel,
       emailSectionHdr:item.emailSectionHdr||'',
       callSectionHdr:item.callSectionHdr||'',
       callNotAttempted:!!item.callNotAttempted,
@@ -327,7 +334,11 @@ class Component extends DCLogic {
     v.cities=D.shops.cities.map(c=>{
       const shops=c.shops.filter(it=>!this.S(it.id).terminal).map(it=>this.mkShop(it));
       const grouped={};
-      shops.forEach(s=>{const b=s.band||'new_outreach';(grouped[b]=grouped[b]||[]).push(s);});
+      shops.forEach(s=>{
+        // fold manual_review into new_outreach — no confusing "Review" label
+        const b=(s.band==='manual_review'||!s.band)?'new_outreach':s.band;
+        (grouped[b]=grouped[b]||[]).push(s);
+      });
       const bandGroups=SHOP_BAND_ORDER.filter(b=>grouped[b]&&grouped[b].length>0).map(b=>({label:SHOP_BAND_LABELS[b],count:grouped[b].length,shops:grouped[b]}));
       const multiGroup=bandGroups.length>1;
       bandGroups.forEach(g=>g.showLabel=multiGroup);
