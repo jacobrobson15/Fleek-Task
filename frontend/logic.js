@@ -206,7 +206,7 @@ class Component extends DCLogic {
       markWon:()=>this.chipR(item.id,'Won'),
       markLost:()=>this.chipR(item.id,'Lost'),
     };
-    if(item.band==='reply_needed') r.chips=['Keep talking','Call booked','Not now','Wrong person','Lost'].map(l=>({label:l,onClick:()=>this.chipR(item.id,l)}));
+    if(item.band==='reply_needed') r.chips=['Call booked','Not now','Wrong person','Lost'].map(l=>({label:l,onClick:()=>this.chipR(item.id,l)}));
     else r.chips=[];
     r.hasChips=r.chips.length>0;
     r.isReply=item.band==='reply_needed';

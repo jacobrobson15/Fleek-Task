@@ -110,11 +110,25 @@
                   <sc-if value="{{ row.hasInbound }}">
                     <div style="background:#FBF1EE;border-left:2px solid #E8563A;border-radius:0 8px 8px 0;padding:11px 14px;font:italic 400 14px Inter;color:#7a5a50;line-height:1.5">"{{ row.lastInbound }}"</div>
                   </sc-if>
-                  <!-- Outcome chips for reply band — labeled separately -->
-                  <div style="margin-top:14px">
+                  <!-- Draft reply -->
+                  <div style="background:#F6F6F5;border-radius:10px;padding:14px 16px;font:400 14px Inter;color:#33332F;line-height:1.6;white-space:pre-line;margin-top:12px">{{ row.draft }}</div>
+                  <sc-if value="{{ row.notCopied }}">
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                      <button onClick="{{ row.copy }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Copy draft</button>
+                      <button onClick="{{ row.markSent }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Mark sent</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ row.copied }}">
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                      <button onClick="{{ row.copy }}" style="background:#fff;color:#6B7280;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Copied ✓</button>
+                      <button onClick="{{ row.markSent }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Mark sent</button>
+                    </div>
+                  </sc-if>
+                  <!-- Outcome chips -->
+                  <div style="margin-top:18px;padding-top:14px;border-top:1px solid #F4F4F2">
                     <div class="outcome-label">Outcome</div>
                     <div style="display:flex;flex-wrap:wrap;gap:8px">
-                      <sc-for list="{{ row.chips }}" as="chip" hint-placeholder-count="5">
+                      <sc-for list="{{ row.chips }}" as="chip" hint-placeholder-count="4">
                         <button onClick="{{ chip.onClick }}" style="background:#fff;border:1px solid #E4E4E2;border-radius:20px;padding:7px 14px;font:500 13px Inter;color:#1A1A1A;cursor:pointer">{{ chip.label }}</button>
                       </sc-for>
                     </div>
