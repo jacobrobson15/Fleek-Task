@@ -6,19 +6,23 @@ class Component extends DCLogic {
     showDoneR:false, showDoneS:false,
     items:{}, actedR:0, actedS:0,
     igAccounts:[], showAddForm:false, newHandle:'', removeWarn:null,
+    // JS-side account overrides for leads (id → accountId), used for redistribution
+    leadAssignments:{},
+    // notification shown after upload simulation or account add
+    uploadMsg:null, uploadLoading:false,
   };
 
   componentDidMount(){
     const init=()=>{
       const D=window.FLEEK_DATA; if(!D||this.state.loaded)return;
       this.D=D;
-      const order=[...D.resellers.replies, ...D.resellers.followups, ...D.resellers.newout].map(x=>x.id);
+      const order=[...D.resellers.replies,...D.resellers.followups,...D.resellers.newout].map(x=>x.id);
       this.qOrder=order; this.numMap={}; order.forEach((id,i)=>this.numMap[id]=i+1);
       this.rmap={}; [...D.resellers.replies,...D.resellers.followups,...D.resellers.newout].forEach(x=>this.rmap[x.id]=x);
       this.sOrder=[]; this.smap={}; D.shops.cities.forEach(c=>c.shops.forEach(s=>{this.sOrder.push(s.id); this.smap[s.id]=s;}));
       const igAccounts=D.accounts.map(a=>({
         id:a.id, handle:a.handle, cap:a.cap, sentToday:a.used,
-        midConvoCount:a.midConvoCount||0, status:a.status||'active',
+        midConvoCount:a.midConvoCount||0, status:(a.status||'active').toLowerCase(),
       }));
       this.setState({loaded:true, igAccounts, openR:order[0]||null, openS:this.sOrder[0]||null});
     };
@@ -29,6 +33,20 @@ class Component extends DCLogic {
 
   acct(id){ return this.state.igAccounts.find(a=>a.id===id); }
   S(id){ return this.state.items[id]||{}; }
+
+  // Returns the effective account ID for a lead — JS override wins over Python assignment
+  getAssignedAccount(id, fallback){
+    return this.state.leadAssignments[id] || fallback || null;
+  }
+
+  // Count active (non-terminal) leads managed by an account across all bands
+  getManagedCount(accId){
+    const all=[...this.D.resellers.replies,...this.D.resellers.followups,...this.D.resellers.newout];
+    return all.filter(it=>
+      !this.S(it.id).terminal &&
+      (this.state.leadAssignments[it.id]||it.account)===accId
+    ).length;
+  }
 
   nextActive(order, items, fromId){
     const idx=order.indexOf(fromId);
@@ -41,13 +59,14 @@ class Component extends DCLogic {
   toggleR(id){ this.setState(s=>({openR:s.openR===id?null:id})); }
   copyR(id,draft){ try{navigator.clipboard&&navigator.clipboard.writeText(draft);}catch(e){} this.setState(s=>({items:{...s.items,[id]:{...s.items[id],copied:true}}})); }
 
-  markSentR(id,account){
+  markSentR(id,itemAccount){
     this.setState(s=>{
       const igAccounts=[...s.igAccounts];
       const items={...s.items,[id]:{...s.items[id],terminal:true,result:'Sent'}};
-      let accId=account;
+      // JS-side override takes precedence over Python-assigned account
+      let accId=s.leadAssignments[id]||itemAccount;
       if(!accId){
-        // new outreach: pick lowest-used active account with remaining capacity
+        // fallback: pick active account with most remaining capacity
         const free=igAccounts.filter(a=>a.status==='active'&&a.sentToday<a.cap)
                              .sort((x,y)=>x.sentToday-y.sentToday)[0];
         accId=free?free.id:null;
@@ -124,9 +143,11 @@ class Component extends DCLogic {
       const isPaused=a.status==='paused';
       const status=isPaused?'Paused':isLimit?'At limit':'Active';
       const pillColor=isPaused?'#9A9A95':isLimit?'#E8563A':'#6B7280';
+      const managed=this.getManagedCount(a.id);
       return {
         id:a.id, handle:'@'+a.handle, usedStr:a.sentToday+'/'+a.cap,
-        pct:Math.round(a.sentToday/a.cap*100)+'%', status, pillColor, pillBg:'#F4F4F3', live:a.midConvoCount||0,
+        pct:Math.round(a.sentToday/a.cap*100)+'%', status, pillColor, pillBg:'#F4F4F3',
+        live:a.midConvoCount||0, managed,
         warn:st.removeWarn===a.id,
         warnText:(a.midConvoCount||0)+' leads are mid-conversation on this account. They will be flagged for review — nothing is reassigned.',
         onRemove:()=>this.setState({removeWarn:a.id}),
@@ -152,12 +173,16 @@ class Component extends DCLogic {
     return r;
   }
 
+  // Groups leads by their effective account (JS override → Python assignment)
   groupByAccount(items){
+    const st=this.state;
     const active=items.filter(it=>!this.S(it.id).terminal);
-    const filt=this.state.filter?active.filter(it=>it.account===this.state.filter):active;
+    const filt=st.filter
+      ? active.filter(it=>(st.leadAssignments[it.id]||it.account)===st.filter)
+      : active;
     const groups=[];
-    this.state.igAccounts.forEach(a=>{
-      const rows=filt.filter(it=>it.account===a.id).map(it=>this.mkRow(it));
+    st.igAccounts.forEach(a=>{
+      const rows=filt.filter(it=>(st.leadAssignments[it.id]||it.account)===a.id).map(it=>this.mkRow(it));
       if(rows.length) groups.push({key:a.id,label:'Sending from @'+a.handle,rows});
     });
     return {groups,count:filt.length};
@@ -205,24 +230,22 @@ class Component extends DCLogic {
       tabSUnderline:st.page==='shops'?'inset 0 -2px 0 #E8563A':'none',
     };
 
-    // accounts bar — reads from shared igAccounts (same source as Admin)
+    // accounts bar — same shared igAccounts as Admin
     v.accounts=st.igAccounts.map(a=>this.acctView(a));
     v.hasFilter=!!st.filter;
     const filterAcc=st.igAccounts.find(a=>a.id===st.filter);
     v.filterLabel=filterAcc?('@'+filterAcc.handle):'';
     v.clearFilter=()=>this.setState({filter:null});
 
-    // bands
+    // all three bands grouped by assigned account
     const reply=this.groupByAccount(D.resellers.replies);
     const fu=this.groupByAccount(D.resellers.followups);
-    const newActive=D.resellers.newout.filter(it=>!this.S(it.id).terminal);
-    // new outreach is hidden when an account filter is active (it's unassigned)
-    const newFilt=st.filter?[]:newActive;
+    const newByAcct=this.groupByAccount(D.resellers.newout);
+
     v.replyGroups=reply.groups; v.replyCount=reply.count; v.replyHas=reply.count>0;
     v.fuGroups=fu.groups; v.fuCount=fu.count; v.fuHas=fu.count>0;
-    v.newGroups=newFilt.length?[{key:'u',label:'Unassigned · load-balances to free budget',rows:newFilt.map(it=>this.mkRow(it))}]:[];
-    v.newCount=newFilt.length; v.newHas=newFilt.length>0;
-    v.allCaughtR=(reply.count+fu.count+newFilt.length)===0;
+    v.newGroups=newByAcct.groups; v.newCount=newByAcct.count; v.newHas=newByAcct.count>0;
+    v.allCaughtR=(reply.count+fu.count+newByAcct.count)===0;
 
     // progress + done
     const totalR=D.resellers.doneStart+(D.resellers.replies.length+D.resellers.followups.length+D.resellers.newout.length);
@@ -258,23 +281,72 @@ class Component extends DCLogic {
       handleInput:e=>this.setState({newHandle:e.target.value}),
       addAccount:()=>this.setState({showAddForm:true,newHandle:''}),
       cancelAdd:()=>this.setState({showAddForm:false,newHandle:''}),
+
       saveAccount:()=>{
         const h=(st.newHandle||'').replace(/^@/,'').trim(); if(!h)return;
         const id='ig_'+String(Date.now()).slice(-4);
-        this.setState(s=>({
-          igAccounts:[...s.igAccounts,{id,handle:h,cap:40,sentToday:0,midConvoCount:0,status:'active'}],
-          showAddForm:false,newHandle:'',
-        }));
+        const newAcc={id,handle:h,cap:40,sentToday:0,midConvoCount:0,status:'active'};
+        const updatedAccounts=[...st.igAccounts,newAcc];
+        const activeAccounts=updatedAccounts.filter(a=>a.status==='active');
+
+        // Redistribute all uncontacted (new_outreach) leads round-robin across every active account
+        const allNewOut=this.D.resellers.newout.filter(it=>!this.S(it.id).terminal);
+        const newAssignments={...st.leadAssignments};
+        allNewOut.forEach((it,i)=>{
+          newAssignments[it.id]=activeAccounts[i%activeAccounts.length].id;
+        });
+
+        // How many queued leads moved to the new account
+        const movedToNew=allNewOut.filter(it=>newAssignments[it.id]===id).length;
+        const msg=movedToNew>0
+          ? `@${h} added · ${movedToNew} queued leads automatically assigned to this account`
+          : `@${h} added to the pipeline`;
+
+        this.setState({
+          igAccounts:updatedAccounts, leadAssignments:newAssignments,
+          showAddForm:false, newHandle:'', uploadMsg:msg,
+        });
+        // Auto-dismiss notification after 8 seconds
+        setTimeout(()=>this.setState(s=>s.uploadMsg===msg?{uploadMsg:null}:{}),8000);
       },
+
+      // Upload area click — simulates a CSV upload for the demo
+      uploadClick:()=>{
+        if(this.state.uploadLoading) return;
+        this.setState({uploadLoading:true, uploadMsg:null});
+        setTimeout(()=>{
+          // Use this.state (live) so we always see current accounts, not stale closure
+          const active=this.state.igAccounts.filter(a=>a.status==='active');
+          const total=28;
+          const n=Math.max(active.length,1);
+          const base=Math.floor(total/n);
+          const parts=active.map((a,i)=>{
+            const count=i===active.length-1?(total-base*(active.length-1)):base;
+            return `@${a.handle} (${count} leads)`;
+          });
+          const msg=`✓ ${total} new leads added — assigned to ${parts.join(' · ')}`;
+          this.setState({uploadLoading:false, uploadMsg:msg});
+          setTimeout(()=>this.setState(s=>s.uploadMsg===msg?{uploadMsg:null}:{}),10000);
+        },1400);
+      },
+      uploadLoading:st.uploadLoading,
+      notUploading:!st.uploadLoading,
+      uploadMsg:st.uploadMsg,
+      hasUploadMsg:!!st.uploadMsg,
+      dismissUploadMsg:()=>this.setState({uploadMsg:null}),
+
       resetDemo:()=>{
         const igAccounts=this.D.accounts.map(a=>({
           id:a.id, handle:a.handle, cap:a.cap, sentToday:a.used,
-          midConvoCount:a.midConvoCount||0, status:a.status||'active',
+          midConvoCount:a.midConvoCount||0, status:(a.status||'active').toLowerCase(),
         }));
+        // Full reset: accounts, all actions, all lead reassignments, all state
         this.setState({
           igAccounts, items:{}, actedR:0, actedS:0, filter:null,
           openR:this.qOrder[0]||null, openS:this.sOrder[0]||null,
           showDoneR:false, showDoneS:false,
+          leadAssignments:{}, uploadMsg:null, uploadLoading:false,
+          showAddForm:false, newHandle:'', removeWarn:null,
         });
       },
     };

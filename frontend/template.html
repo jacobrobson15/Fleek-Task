@@ -340,10 +340,23 @@
 
       <!-- 1. Upload pipeline -->
       <div style="font:600 15px Inter;color:#1A1A1A;margin-bottom:10px">Upload pipeline</div>
-      <div style="border:1.5px dashed #D9D9D5;border-radius:12px;padding:34px;text-align:center;background:#fff;cursor:pointer">
-        <div style="font:400 14px Inter;color:#9A9A95">Drop your morning CSV here or click to upload.</div>
-        <div style="font:400 12.5px Inter;color:#BDBDB8;margin-top:8px">.csv · .txt · .xls · .xlsx</div>
-      </div>
+      <sc-if value="{{ admin.notUploading }}">
+        <div onClick="{{ admin.uploadClick }}" style="border:1.5px dashed #D9D9D5;border-radius:12px;padding:34px;text-align:center;background:#fff;cursor:pointer">
+          <div style="font:400 14px Inter;color:#9A9A95">Drop your morning CSV here or click to upload.</div>
+          <div style="font:400 12.5px Inter;color:#BDBDB8;margin-top:8px">.csv · .txt · .xls · .xlsx</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ admin.uploadLoading }}">
+        <div style="border:1.5px dashed #D9D9D5;border-radius:12px;padding:34px;text-align:center;background:#fff">
+          <div style="font:400 14px Inter;color:#9A9A95">Processing upload…</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ admin.hasUploadMsg }}">
+        <div style="background:#F0F7EC;border:1px solid #C3DFB2;border-radius:10px;padding:13px 16px;margin-top:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;animation:fadein 0.2s ease">
+          <span style="font:400 13.5px Inter;color:#2D6B1E;line-height:1.5">{{ admin.uploadMsg }}</span>
+          <span onClick="{{ admin.dismissUploadMsg }}" style="font:500 14px Inter;color:#6B7280;cursor:pointer;flex-shrink:0;padding-top:1px">✕</span>
+        </div>
+      </sc-if>
 
       <!-- 2. Master pipeline -->
       <div style="font:600 15px Inter;color:#1A1A1A;margin:28px 0 10px">Master pipeline</div>
@@ -411,7 +424,7 @@
             <div style="height:5px;background:#F0F0EF;border-radius:20px;margin-top:12px;overflow:hidden">
               <div style="height:100%;background:#E8563A;border-radius:20px;width:{{ acc.pct }}"></div>
             </div>
-            <div style="font:400 12px Inter;color:#9A9A95;margin-top:8px">{{ acc.usedStr }} DMs · {{ acc.live }} mid-conversation</div>
+            <div style="font:400 12px Inter;color:#9A9A95;margin-top:8px">{{ acc.usedStr }} DMs today · {{ acc.managed }} leads managing</div>
             <div style="display:flex;gap:16px;margin-top:12px">
               <span style="font:500 12.5px Inter;color:#6B7280;cursor:pointer">Rename</span>
               <span onClick="{{ acc.onRemove }}" style="font:500 12.5px Inter;color:#6B7280;cursor:pointer">Remove</span>
