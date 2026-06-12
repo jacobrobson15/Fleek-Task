@@ -237,8 +237,13 @@ class Component extends DCLogic {
     const hasPhone=!!(item.phone&&item.phone!=='—');
     const emailPrimary=item.track!=='call';
     const isReplyBand=item.band==='reply_needed';
-    const emailTag=`EMAIL ${Math.min((item.emailStep||0)+1,4)}/4`;
-    const callTag=`CALL ${Math.min((item.callStep||0)+1,2)}/2`;
+    const isFollowUp=item.band==='follow_ups_due';
+    // Email: follow_ups_due shows at least step 2 (already contacted by email)
+    // Call: always step+1 — could be first call even on a follow-up
+    const emailStepDisplay=isFollowUp?Math.max(Math.min((item.emailStep||0)+1,4),2):Math.min((item.emailStep||0)+1,4);
+    const callStepDisplay=Math.min((item.callStep||0)+1,2);
+    const emailTag=`EMAIL ${emailStepDisplay}/4`;
+    const callTag=`CALL ${callStepDisplay}/2`;
     // Reply band: grey out tags (sequence paused), clear due labels
     const emailTagClass=`ch-tag ${(!isReplyBand&&item.emailDueToday)?'ch-tag-primary':'ch-tag-secondary'}`;
     const callTagClass=`ch-tag ${(!isReplyBand&&item.callDueToday)?'ch-tag-primary':'ch-tag-secondary'}`;

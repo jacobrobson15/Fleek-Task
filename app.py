@@ -178,8 +178,11 @@ def build_fleek_data() -> dict:
                     h = f"{kind} · step {step} of {total}" if kind == "Email" else f"{kind} · attempt {step} of {total}"
                     return h + (f" · {due_label}" if due_label else "")
 
-                email_sec_hdr = _sec_hdr("Email", min(email_step_n+1, 4), 4, email_due_label)
-                call_sec_hdr  = _sec_hdr("Call", min(call_step_n+1, 2), 2, call_due_label) if (has_phone_v and (call_action or call_step_n > 0 or call_due_today)) else ""
+                is_followup = (band == scoring.BAND_FOLLOWUP)
+                email_disp = max(min(email_step_n + 1, 4), 2) if is_followup else min(email_step_n + 1, 4)
+                call_disp  = min(call_step_n + 1, 2)
+                email_sec_hdr = _sec_hdr("Email", email_disp, 4, email_due_label)
+                call_sec_hdr  = _sec_hdr("Call", call_disp, 2, call_due_label) if (has_phone_v and (call_action or call_step_n > 0 or call_due_today)) else ""
 
                 raw_call_step = int(r.get("call_step") or 0) if r is not None else 0
 
