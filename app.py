@@ -93,6 +93,8 @@ def build_fleek_data() -> dict:
             "cap": cap,
             "status": status,
             "midConvoCount": mid_convo.get(a["id"], 0),
+            "inProgress": accts_mod.in_progress_count(df, a["id"]),
+            "queued": accts_mod.queued_count(df, a["id"]),
         })
 
     # ── Classify cards into reseller bands and shop list ──────────────────

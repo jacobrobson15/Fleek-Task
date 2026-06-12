@@ -84,28 +84,73 @@ def overage(acc: dict) -> int:
 
 # --- assignment --------------------------------------------------------------
 def assign_dm_accounts(df: pd.DataFrame, state: dict) -> pd.DataFrame:
-    """Round-robin assign an account to any DM lead that doesn't yet have one.
+    """Round-robin assign/reassign an account to DM leads.
 
-    Follow-ups already carrying `assigned_account` keep it (lock — never switch
-    sender mid-conversation, F2). Only ACTIVE accounts receive *new* assignments;
-    FOLLOWUPS_ONLY/PAUSED accounts keep their in-flight leads but get no new ones.
+    In-progress leads (assigned_instagram_account_id set — first DM was sent) are
+    locked and never moved (F2). Queued leads (no assigned_instagram_account_id)
+    are round-robined across ACTIVE accounts, naturally rebalancing when the
+    account list changes (e.g. a new account is added).
     """
     df = df.copy()
     if "assigned_account" not in df.columns:
         df["assigned_account"] = ""
+    if "planned_instagram_account_id" not in df.columns:
+        df["planned_instagram_account_id"] = ""
+    if "assigned_instagram_account_id" not in df.columns:
+        df["assigned_instagram_account_id"] = ""
+
+    # Backfill: leads that had a DM sent before these columns were introduced
+    if "dm_step" in df.columns:
+        needs_backfill = (
+            (df["assigned_instagram_account_id"].astype(str).str.strip() == "") &
+            (df["dm_step"].astype(int) > 0) &
+            (df["assigned_account"].astype(str).str.strip() != "")
+        )
+        df.loc[needs_backfill, "assigned_instagram_account_id"] = df.loc[needs_backfill, "assigned_account"]
+
     open_accounts = [a["id"] for a in state["accounts"] if a["status"] == ACTIVE]
     if not open_accounts:
-        return df  # nothing to assign onto; handled as a guard banner upstream
+        return df
 
     rr = 0
     for idx in df.index:
         if not bool(df.at[idx, "dm_active"]):
             continue
-        if str(df.at[idx, "assigned_account"]).strip():
-            continue  # locked already
-        df.at[idx, "assigned_account"] = open_accounts[rr % len(open_accounts)]
+        # In-progress leads are locked to their account
+        if str(df.at[idx, "assigned_instagram_account_id"]).strip():
+            continue
+        # Queued: round-robin across active accounts (rebalances when list changes)
+        acc_id = open_accounts[rr % len(open_accounts)]
+        df.at[idx, "planned_instagram_account_id"] = acc_id
+        df.at[idx, "assigned_account"] = acc_id
         rr += 1
     return df
+
+
+def in_progress_count(df: pd.DataFrame, account_id: str) -> int:
+    """Leads with first DM sent, owned by this account, not closed."""
+    if "assigned_instagram_account_id" not in df.columns:
+        return 0
+    mask = df["assigned_instagram_account_id"].astype(str).str.strip() == str(account_id)
+    if "band" in df.columns:
+        mask = mask & (df["band"].astype(str) != "closed")
+    return int(mask.sum())
+
+
+def queued_count(df: pd.DataFrame, account_id: str) -> int:
+    """Leads planned for this account but not yet sent (no DM out yet)."""
+    if "planned_instagram_account_id" not in df.columns:
+        return 0
+    planned = df["planned_instagram_account_id"].astype(str).str.strip() == str(account_id)
+    not_assigned = (
+        df["assigned_instagram_account_id"].astype(str).str.strip() == ""
+        if "assigned_instagram_account_id" in df.columns
+        else pd.Series([True] * len(df), index=df.index)
+    )
+    mask = planned & not_assigned
+    if "band" in df.columns:
+        mask = mask & (df["band"].astype(str) != "closed")
+    return int(mask.sum())
 
 
 def needs_dm_slot(lead) -> bool:

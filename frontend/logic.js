@@ -23,6 +23,7 @@ class Component extends DCLogic {
       const igAccounts=D.accounts.map(a=>({
         id:a.id, handle:a.handle, cap:a.cap, sentToday:a.used,
         midConvoCount:a.midConvoCount||0, status:(a.status||'active').toLowerCase(),
+        inProgress:a.inProgress||0, queued:a.queued||0,
       }));
       this.setState({loaded:true, igAccounts, openR:order[0]||null, openS:this.sOrder[0]||null});
     };
@@ -148,6 +149,7 @@ class Component extends DCLogic {
         id:a.id, handle:'@'+a.handle, usedStr:a.sentToday+'/'+a.cap,
         pct:Math.round(a.sentToday/a.cap*100)+'%', status, pillColor, pillBg:'#F4F4F3',
         live:a.midConvoCount||0, managed,
+        inProgress:a.inProgress||0, queued:a.queued||0,
         warn:st.removeWarn===a.id,
         warnText:(a.midConvoCount||0)+' leads are mid-conversation on this account. They will be flagged for review — nothing is reassigned.',
         onRemove:()=>this.setState({removeWarn:a.id}),
@@ -214,7 +216,8 @@ class Component extends DCLogic {
       status, pillColor:isPaused?'#9A9A95':isLimit?'#E8563A':'#6B7280',
       pillBg:isLimit?'#FBF1EE':'#F4F4F3',
       ring:this.state.filter===a.id?'#E8563A':'#EDEDEB',
-      onClick:()=>this.setState(s=>({filter:s.filter===a.id?null:a.id}))
+      onClick:()=>this.setState(s=>({filter:s.filter===a.id?null:a.id})),
+      inProgress:a.inProgress||0, queued:a.queued||0,
     };
   }
 
@@ -285,7 +288,7 @@ class Component extends DCLogic {
       saveAccount:()=>{
         const h=(st.newHandle||'').replace(/^@/,'').trim(); if(!h)return;
         const id='ig_'+String(Date.now()).slice(-4);
-        const newAcc={id,handle:h,cap:40,sentToday:0,midConvoCount:0,status:'active'};
+        const newAcc={id,handle:h,cap:40,sentToday:0,midConvoCount:0,status:'active',inProgress:0,queued:0};
         const updatedAccounts=[...st.igAccounts,newAcc];
         const activeAccounts=updatedAccounts.filter(a=>a.status==='active');
 

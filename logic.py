@@ -234,7 +234,8 @@ _UNDO_FIELDS = ["stage", "num_touches", "last_touch", "last_inbound_text",
                 "human_owner_status", "dm_step", "email_step", "call_step",
                 "dm_next_date", "email_next_date", "call_next_date",
                 "warm_call_due", "reply_sentiment", "notes", "conversation_channel",
-                "snoozed_until", "data_quality_flags"]
+                "snoozed_until", "data_quality_flags",
+                "planned_instagram_account_id", "assigned_instagram_account_id"]
 
 
 def _json_safe(v):
@@ -277,6 +278,7 @@ def mark_sent(lead_id: str, action_key: str) -> None:
             ch = action_key.split(":", 1)[1]
             if ch == "dm" and _consume_dm_slot(lead):
                 undo_meta["dm_account"] = str(lead.get("assigned_account", ""))
+                _lock_dm_account(lead)
             engine.clear_reply_needed(lead, demo_today)
             changed = True
     elif action_key == "warm:0":
@@ -291,6 +293,7 @@ def mark_sent(lead_id: str, action_key: str) -> None:
         if ch in ("dm", "email", "call") and int(lead.get(f"{ch}_step", 0)) == int(step_s):
             if ch == "dm" and _consume_dm_slot(lead):
                 undo_meta["dm_account"] = str(lead.get("assigned_account", ""))
+                _lock_dm_account(lead)
             engine.advance_track(lead, ch, demo_today)
             changed = True
 
@@ -304,6 +307,16 @@ def mark_sent(lead_id: str, action_key: str) -> None:
     data_store.save(df)
     log.info("mark_sent lead=%s action=%s -> stage=%s touches=%s",
              lead_id, action_key, lead.get("stage"), lead.get("num_touches"))
+
+
+def _lock_dm_account(lead) -> None:
+    """On first DM send: copy planned_instagram_account_id → assigned (one-way lock)."""
+    if str(lead.get("assigned_instagram_account_id", "")).strip():
+        return  # already locked
+    source = (str(lead.get("planned_instagram_account_id", "")).strip()
+              or str(lead.get("assigned_account", "")).strip())
+    if source:
+        lead["assigned_instagram_account_id"] = source
 
 
 def _consume_dm_slot(lead) -> bool:

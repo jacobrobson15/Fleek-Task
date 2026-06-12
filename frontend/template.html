@@ -48,6 +48,7 @@
               <div style="height:100%;background:#E8563A;border-radius:20px;width:{{ acc.pct }}"></div>
             </div>
             <div style="font:400 12px Inter;color:#9A9A95;margin-top:8px">{{ acc.usedStr }} DMs today</div>
+            <div style="font:400 11px Inter;color:#BDBDB8;margin-top:2px">{{ acc.inProgress }} in progress · {{ acc.queued }} queued</div>
           </div>
         </sc-for>
       </div>
@@ -368,7 +369,6 @@
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0">
             <button style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:7px 13px;font:500 13px Inter;cursor:pointer">Download master CSV</button>
-            <button style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:7px 13px;font:500 13px Inter;cursor:pointer">Replace master CSV</button>
           </div>
         </div>
       </div>
@@ -387,26 +387,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr style="border-bottom:1px solid #F0F0EF">
-              <td style="padding:12px 16px;font:500 13px Inter;color:#1A1A1A;white-space:nowrap">fleek_pipeline_2026-06-11.csv</td>
-              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280">30 added · 18 updated · 7 merged · 0 skipped</td>
-              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280;white-space:nowrap">Pipeline CSV</td>
-              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280;white-space:nowrap">Today 08:14</td>
-              <td style="padding:12px 16px"><span style="font:500 13px Inter;color:#6B7280;cursor:pointer">Download</span></td>
-            </tr>
-            <tr style="border-bottom:1px solid #F0F0EF">
-              <td style="padding:12px 16px;font:500 13px Inter;color:#1A1A1A;white-space:nowrap">fleek_pipeline_2026-06-10.csv</td>
-              <td style="padding:12px 16px;font:italic 400 13px Inter;color:#9A9A95">Same file — already processed</td>
-              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280;white-space:nowrap">Pipeline CSV</td>
-              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280;white-space:nowrap">Yesterday 08:02</td>
-              <td style="padding:12px 16px"><span style="font:500 13px Inter;color:#6B7280;cursor:pointer">Download</span></td>
-            </tr>
             <tr>
-              <td style="padding:12px 16px;font:500 13px Inter;color:#1A1A1A;white-space:nowrap">fleek_pipeline_2026-06-09.csv</td>
-              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280">12 added · 5 updated · 2 merged · 0 skipped</td>
-              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280;white-space:nowrap">Pipeline CSV</td>
-              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280;white-space:nowrap">2 days ago 08:31</td>
-              <td style="padding:12px 16px"><span style="font:500 13px Inter;color:#6B7280;cursor:pointer">Download</span></td>
+              <td colspan="5" style="padding:24px 16px;font:400 13px Inter;color:#BDBDB8;text-align:center">No uploads yet.</td>
             </tr>
           </tbody>
         </table>
@@ -424,7 +406,8 @@
             <div style="height:5px;background:#F0F0EF;border-radius:20px;margin-top:12px;overflow:hidden">
               <div style="height:100%;background:#E8563A;border-radius:20px;width:{{ acc.pct }}"></div>
             </div>
-            <div style="font:400 12px Inter;color:#9A9A95;margin-top:8px">{{ acc.usedStr }} DMs today · {{ acc.managed }} leads managing</div>
+            <div style="font:400 12px Inter;color:#9A9A95;margin-top:8px">{{ acc.usedStr }} DMs today</div>
+            <div style="font:400 11.5px Inter;color:#BDBDB8;margin-top:2px">{{ acc.inProgress }} in progress · {{ acc.queued }} queued</div>
             <div style="display:flex;gap:16px;margin-top:12px">
               <span style="font:500 12.5px Inter;color:#6B7280;cursor:pointer">Rename</span>
               <span onClick="{{ acc.onRemove }}" style="font:500 12.5px Inter;color:#6B7280;cursor:pointer">Remove</span>
