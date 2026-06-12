@@ -88,19 +88,22 @@
                   <sc-if value="{{ row.hasInbound }}">
                     <div style="background:#FBF1EE;border-left:2px solid #E8563A;border-radius:0 8px 8px 0;padding:11px 14px;font:italic 400 14px Inter;color:#7a5a50;line-height:1.5">“{{ row.lastInbound }}”</div>
                   </sc-if>
-                  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+                  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;align-items:center">
                     <sc-for list="{{ row.chips }}" as="chip" hint-placeholder-count="5">
                       <button onClick="{{ chip.onClick }}" style="background:#fff;border:1px solid #E4E4E2;border-radius:20px;padding:7px 14px;font:500 13px Inter;color:#1A1A1A;cursor:pointer" style-hover="border-color:#E8563A;color:#E8563A">{{ chip.label }}</button>
                     </sc-for>
+                    <sc-if value="{{ row.replyClosed }}">
+                      <button onClick="{{ row.replyToggle }}" style="background:none;border:none;color:#9A9A95;font:500 13px Inter;cursor:pointer;padding:7px 4px">Log reply</button>
+                    </sc-if>
                   </div>
-                  <sc-if value="{{ row.replyClosed }}">
-                    <button onClick="{{ row.replyToggle }}" style="background:none;border:none;color:#9A9A95;font:400 13px Inter;cursor:pointer;padding:12px 0 0;text-decoration:underline;text-underline-offset:3px">They replied…</button>
-                  </sc-if>
                   <sc-if value="{{ row.replyOpen }}">
                     <div style="margin-top:12px">
                       <textarea onInput="{{ row.replyInput }}" value="{{ row.replyText }}" placeholder="Paste what they said…" style="width:100%;border:1px solid #E4E4E2;border-radius:8px;padding:10px 12px;font:400 14px Inter;color:#1A1A1A;resize:vertical;min-height:62px"></textarea>
                       <div style="margin-top:8px"><button onClick="{{ row.replySave }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:8px 14px;font:500 13px Inter;cursor:pointer">Save reply</button></div>
                     </div>
+                  </sc-if>
+                  <sc-if value="{{ row.hasSecondary }}">
+                    <div style="font:400 12px Inter;color:#BDBDB8;margin-top:14px;padding-top:12px;border-top:1px solid #F4F4F2">{{ row.secondaryLine }}</div>
                   </sc-if>
                 </div>
               </sc-if>
@@ -137,6 +140,9 @@
                       <button onClick="{{ row.copy }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Copy draft</button>
                       <button onClick="{{ row.markSent }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Mark sent</button>
                       <button onClick="{{ row.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
+                      <sc-if value="{{ row.replyClosed }}">
+                        <button onClick="{{ row.replyToggle }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 4px">Log reply</button>
+                      </sc-if>
                     </div>
                   </sc-if>
                   <sc-if value="{{ row.copied }}">
@@ -144,16 +150,19 @@
                       <button onClick="{{ row.copy }}" style="background:#fff;color:#6B7280;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Copied ✓</button>
                       <button onClick="{{ row.markSent }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Mark sent</button>
                       <button onClick="{{ row.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
+                      <sc-if value="{{ row.replyClosed }}">
+                        <button onClick="{{ row.replyToggle }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 4px">Log reply</button>
+                      </sc-if>
                     </div>
-                  </sc-if>
-                  <sc-if value="{{ row.replyClosed }}">
-                    <button onClick="{{ row.replyToggle }}" style="background:none;border:none;color:#9A9A95;font:400 13px Inter;cursor:pointer;padding:12px 0 0;text-decoration:underline;text-underline-offset:3px">They replied…</button>
                   </sc-if>
                   <sc-if value="{{ row.replyOpen }}">
                     <div style="margin-top:12px">
                       <textarea onInput="{{ row.replyInput }}" value="{{ row.replyText }}" placeholder="Paste what they said…" style="width:100%;border:1px solid #E4E4E2;border-radius:8px;padding:10px 12px;font:400 14px Inter;color:#1A1A1A;resize:vertical;min-height:62px"></textarea>
                       <div style="margin-top:8px"><button onClick="{{ row.replySave }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:8px 14px;font:500 13px Inter;cursor:pointer">Save reply</button></div>
                     </div>
+                  </sc-if>
+                  <sc-if value="{{ row.hasSecondary }}">
+                    <div style="font:400 12px Inter;color:#BDBDB8;margin-top:14px;padding-top:12px;border-top:1px solid #F4F4F2">{{ row.secondaryLine }}</div>
                   </sc-if>
                 </div>
               </sc-if>
@@ -187,6 +196,9 @@
                       <button onClick="{{ row.copy }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Copy draft</button>
                       <button onClick="{{ row.markSent }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Mark sent</button>
                       <button onClick="{{ row.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
+                      <sc-if value="{{ row.replyClosed }}">
+                        <button onClick="{{ row.replyToggle }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 4px">Log reply</button>
+                      </sc-if>
                     </div>
                   </sc-if>
                   <sc-if value="{{ row.copied }}">
@@ -194,7 +206,19 @@
                       <button onClick="{{ row.copy }}" style="background:#fff;color:#6B7280;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Copied ✓</button>
                       <button onClick="{{ row.markSent }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Mark sent</button>
                       <button onClick="{{ row.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
+                      <sc-if value="{{ row.replyClosed }}">
+                        <button onClick="{{ row.replyToggle }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 4px">Log reply</button>
+                      </sc-if>
                     </div>
+                  </sc-if>
+                  <sc-if value="{{ row.replyOpen }}">
+                    <div style="margin-top:12px">
+                      <textarea onInput="{{ row.replyInput }}" value="{{ row.replyText }}" placeholder="Paste what they said…" style="width:100%;border:1px solid #E4E4E2;border-radius:8px;padding:10px 12px;font:400 14px Inter;color:#1A1A1A;resize:vertical;min-height:62px"></textarea>
+                      <div style="margin-top:8px"><button onClick="{{ row.replySave }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:8px 14px;font:500 13px Inter;cursor:pointer">Save reply</button></div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ row.hasSecondary }}">
+                    <div style="font:400 12px Inter;color:#BDBDB8;margin-top:14px;padding-top:12px;border-top:1px solid #F4F4F2">{{ row.secondaryLine }}</div>
                   </sc-if>
                 </div>
               </sc-if>

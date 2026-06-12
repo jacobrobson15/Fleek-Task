@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import math
+from datetime import date
 from pathlib import Path
 
 import streamlit as st
@@ -62,6 +63,7 @@ def build_fleek_data() -> dict:
 
     # ── Accounts ──────────────────────────────────────────────────────────
     acct_rows = state["accounts_state"]["accounts"]
+    acct_by_id = {a["id"]: a.get("handle", a["id"]) for a in acct_rows}
 
     # Mid-conversation count per account (reply_needed + follow_ups_due)
     mid_convo: dict = {}
@@ -169,7 +171,43 @@ def build_fleek_data() -> dict:
                 })
 
             else:
-                # Reseller
+                # Reseller — compute quiet secondary-channel context line
+                secondary_line = ""
+                if r is not None:
+                    try:
+                        if channel == "email" and bool(r.get("dm_active")):
+                            dm_step = int(r.get("dm_step") or 0)
+                            acc_id = _s(r.get("assigned_account"))
+                            acc_handle = acct_by_id.get(acc_id, "")
+                            dm_next = r.get("dm_next_date")
+                            parts = [f"DM — step {dm_step} of 4"]
+                            if acc_handle:
+                                parts.append(f"assigned to @{acc_handle}")
+                            if isinstance(dm_next, date) and dm_next is not None:
+                                days = (dm_next - demo_today).days
+                                if days > 0:
+                                    word = "day" if days == 1 else "days"
+                                    if band != scoring.BAND_REPLY:
+                                        parts.append(f"fallback due in {days} {word} if email goes cold")
+                                    else:
+                                        parts.append(f"due in {days} {word}")
+                                elif days == 0:
+                                    parts.append("due today")
+                            secondary_line = " · ".join(parts)
+                        elif channel == "dm" and bool(r.get("email_active")):
+                            email_step = int(r.get("email_step") or 0)
+                            email_next = r.get("email_next_date")
+                            parts = [f"Email — step {email_step} of 4"]
+                            if isinstance(email_next, date) and email_next is not None:
+                                days = (email_next - demo_today).days
+                                if days > 0:
+                                    parts.append(f"due {email_next.strftime('%A')}")
+                                elif days == 0:
+                                    parts.append("due today")
+                            secondary_line = " · ".join(parts)
+                    except Exception:
+                        secondary_line = ""
+
                 item: dict = {
                     "id": lid,
                     "handle": handle or lid,
@@ -179,6 +217,7 @@ def build_fleek_data() -> dict:
                     "account": card.get("account", ""),
                     "why": card.get("why", ""),
                     "draft": draft,
+                    "secondaryLine": secondary_line,
                 }
 
                 if band == scoring.BAND_REPLY:

@@ -170,6 +170,7 @@ class Component extends DCLogic {
       copy:()=>this.copyR(item.id,item.draft), markSent:()=>this.markSentR(item.id,item.account), skip:()=>this.skipR(item.id),
       replyOpen:!!s.replyOpen, replyClosed:!s.replyOpen, replyText:s.replyText||'',
       replyToggle:()=>this.replyToggleR(item.id), replyInput:e=>this.replyInputR(item.id,e.target.value), replySave:()=>this.replySaveR(item.id),
+      secondaryLine:item.secondaryLine||'', hasSecondary:!!(item.secondaryLine),
     };
     if(item.band==='reply') r.chips=['Keep talking','Call booked','Not now','Wrong person','Lost'].map(l=>({label:l,onClick:()=>this.chipR(item.id,l)}));
     return r;
