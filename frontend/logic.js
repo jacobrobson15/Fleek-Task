@@ -358,14 +358,19 @@ class Component extends DCLogic {
           newAssignments[it.id]=activeAccounts[i%activeAccounts.length].id;
         });
 
+        // Recompute queued count per account from the new assignments
+        const newOutCount={};
+        allNewOut.forEach(it=>{ const a=newAssignments[it.id]; if(a) newOutCount[a]=(newOutCount[a]||0)+1; });
+        const updatedAccountsWithQueued=updatedAccounts.map(a=>({...a,queued:newOutCount[a.id]||0}));
+
         // How many queued leads moved to the new account
-        const movedToNew=allNewOut.filter(it=>newAssignments[it.id]===id).length;
+        const movedToNew=newOutCount[id]||0;
         const msg=movedToNew>0
           ? `@${h} added · ${movedToNew} queued leads automatically assigned to this account`
           : `@${h} added to the pipeline`;
 
         this.setState({
-          igAccounts:updatedAccounts, leadAssignments:newAssignments,
+          igAccounts:updatedAccountsWithQueued, leadAssignments:newAssignments,
           showAddForm:false, newHandle:'', uploadMsg:msg,
         });
         // Auto-dismiss notification after 8 seconds
