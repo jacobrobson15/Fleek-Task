@@ -239,7 +239,7 @@ class Component extends DCLogic {
     const o={
       id:item.id, store:item.store, city:item.city, phone:item.phone||'—', draft:item.draft,
       open:this.state.openS===item.id, toggle:()=>this.toggleS(item.id),
-      isEmail:emailPrimary, isCall:!emailPrimary,
+      isEmail:!!item.emailDueToday, isCall:!!(item.callDueToday&&hasPhone),
       copied:!!s.copied, notCopied:!s.copied,
       copy:()=>this.copyS(item.id,item.draft), markSent:()=>this.markSentS(item.id), skip:()=>this.skipS(item.id),
       answered:!!s.answered, notAnswered:!s.answered, answeredAct:()=>this.answeredS(item.id), noAnswer:()=>this.noAnswerS(item.id),

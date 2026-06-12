@@ -374,16 +374,6 @@
                             <button onClick="{{ shop.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
                           </div>
                         </sc-if>
-                        <sc-if value="{{ shop.replyClosed }}">
-                          <button onClick="{{ shop.replyToggle }}" style="width:100%;margin-top:12px;background:#fff;border:1px solid #E4E4E2;border-radius:8px;padding:11px;font:500 14px Inter;color:#1A1A1A;cursor:pointer">They replied…</button>
-                        </sc-if>
-                        <sc-if value="{{ shop.replyOpen }}">
-                          <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
-                            <sc-for list="{{ shop.emailChips }}" as="chip" hint-placeholder-count="5">
-                              <button onClick="{{ chip.onClick }}" style="background:#fff;border:1px solid #E4E4E2;border-radius:20px;padding:7px 14px;font:500 13px Inter;color:#1A1A1A;cursor:pointer">{{ chip.label }}</button>
-                            </sc-for>
-                          </div>
-                        </sc-if>
                       </sc-if>
                     </div>
 

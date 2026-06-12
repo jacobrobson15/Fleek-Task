@@ -152,8 +152,6 @@ def build_fleek_data() -> dict:
                 email_step_n = email_action.get("step", 0) if email_action else (int(r.get("email_step") or 0) if r is not None else 0)
                 call_step_n  = call_action.get("step",  0) if call_action  else (int(r.get("call_step")  or 0) if r is not None else 0)
 
-                email_due_today = (track == "email")
-                call_due_today  = (track == "call")
                 has_phone_v = bool(phone and phone != "—")
 
                 def _due_label(due_date_val):
@@ -165,17 +163,23 @@ def build_fleek_data() -> dict:
                     if days < 7:    return f"due {due_date_val.strftime('%A')}"
                     return f"due in {days} days"
 
-                email_due_label = "due today" if email_due_today else (
-                    _due_label(r.get("email_next_date")) if r is not None else "")
-                call_due_label = ("due today" if call_due_today else (
-                    _due_label(r.get("call_next_date")) if r is not None else "")) if has_phone_v else ""
+                # A channel is "due today" if it's the primary track OR its next_date is today
+                email_next_v = r.get("email_next_date") if r is not None else None
+                call_next_v  = r.get("call_next_date")  if r is not None else None
+                email_due_today = (track == "email") or (
+                    isinstance(email_next_v, date) and email_next_v == demo_today)
+                call_due_today  = (track == "call") or (has_phone_v and
+                    isinstance(call_next_v, date) and call_next_v == demo_today)
+
+                email_due_label = "due today" if email_due_today else _due_label(email_next_v)
+                call_due_label  = ("due today" if call_due_today else _due_label(call_next_v)) if has_phone_v else ""
 
                 def _sec_hdr(kind, step, total, due_label):
                     h = f"{kind} · step {step} of {total}" if kind == "Email" else f"{kind} · attempt {step} of {total}"
                     return h + (f" · {due_label}" if due_label else "")
 
                 email_sec_hdr = _sec_hdr("Email", email_step_n, 4, email_due_label)
-                call_sec_hdr  = _sec_hdr("Call", call_step_n, 2, call_due_label) if (has_phone_v and (call_action or call_step_n > 0)) else ""
+                call_sec_hdr  = _sec_hdr("Call", call_step_n, 2, call_due_label) if (has_phone_v and (call_action or call_step_n > 0 or call_due_today)) else ""
 
                 raw_call_step = int(r.get("call_step") or 0) if r is not None else 0
 
