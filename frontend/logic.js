@@ -162,10 +162,14 @@ class Component extends DCLogic {
   mkRow(item){
     const s=this.S(item.id);
 
-    // Channel tags with step counts — use structured backend fields
+    // Channel tags with step counts — show next step to send (step+1), not completed count.
+    // Reply band is the exception: show the step they actually replied at, guard against 0.
     const primaryIsDm=(item.primaryChannel||'dm')!=='email';
-    const dmTag=item.dmActive?`DM ${item.dmStep||0}/4`:null;
-    const emailTag=item.emailActive?`EMAIL ${item.emailStep||0}/4`:null;
+    const isReply = item.band === 'reply_needed';
+    const dmDisplay = isReply ? (item.dmStep||0) : Math.min((item.dmStep||0)+1, 4);
+    const emailDisplay = isReply ? (item.emailStep||0) : Math.min((item.emailStep||0)+1, 4);
+    const dmTag = item.dmActive && (!isReply || dmDisplay > 0) ? `DM ${dmDisplay}/4` : null;
+    const emailTag = item.emailActive && (!isReply || emailDisplay > 0) ? `EMAIL ${emailDisplay}/4` : null;
     const hasDmTag=!!dmTag;
     const hasEmailTag=!!emailTag;
     const dmTagClass=`ch-tag ${primaryIsDm?'ch-tag-primary':'ch-tag-secondary'}`;
@@ -232,8 +236,8 @@ class Component extends DCLogic {
     const s=this.S(item.id);
     const hasPhone=!!(item.phone&&item.phone!=='—');
     const emailPrimary=item.track!=='call';
-    const emailTag=`EMAIL ${item.emailStep||0}/4`;
-    const callTag=`CALL ${item.callStep||0}/2`;
+    const emailTag=`EMAIL ${Math.min((item.emailStep||0)+1,4)}/4`;
+    const callTag=`CALL ${Math.min((item.callStep||0)+1,2)}/2`;
     const emailTagClass=`ch-tag ${item.emailDueToday?'ch-tag-primary':'ch-tag-secondary'}`;
     const callTagClass=`ch-tag ${item.callDueToday?'ch-tag-primary':'ch-tag-secondary'}`;
     const o={

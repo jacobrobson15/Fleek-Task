@@ -178,8 +178,8 @@ def build_fleek_data() -> dict:
                     h = f"{kind} · step {step} of {total}" if kind == "Email" else f"{kind} · attempt {step} of {total}"
                     return h + (f" · {due_label}" if due_label else "")
 
-                email_sec_hdr = _sec_hdr("Email", email_step_n, 4, email_due_label)
-                call_sec_hdr  = _sec_hdr("Call", call_step_n, 2, call_due_label) if (has_phone_v and (call_action or call_step_n > 0 or call_due_today)) else ""
+                email_sec_hdr = _sec_hdr("Email", min(email_step_n+1, 4), 4, email_due_label)
+                call_sec_hdr  = _sec_hdr("Call", min(call_step_n+1, 2), 2, call_due_label) if (has_phone_v and (call_action or call_step_n > 0 or call_due_today)) else ""
 
                 raw_call_step = int(r.get("call_step") or 0) if r is not None else 0
 
@@ -289,6 +289,15 @@ def build_fleek_data() -> dict:
                     newout_r.append(item)
 
                 pos += 1
+
+    # ── Fix queued count to match new-outreach cards visible on screen ───
+    newout_by_handle: dict = {}
+    for item in newout_r:
+        h = item.get("account", "")
+        if h:
+            newout_by_handle[h] = newout_by_handle.get(h, 0) + 1
+    for acc in accounts_data:
+        acc["queued"] = newout_by_handle.get(acc["id"], 0)
 
     # ── City groups for shops ─────────────────────────────────────────────
     city_map: dict = {}
