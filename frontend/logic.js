@@ -161,6 +161,21 @@ class Component extends DCLogic {
 
   mkRow(item){
     const s=this.S(item.id);
+
+    // Derive primary channel tag and secondary channel tag from secondaryLine.
+    // secondaryLine starts with "DM — step X of 4 ..." when primary is email,
+    // or "Email — step X of 4 ..." when primary is DM.
+    let channelTag='DM';
+    let secondaryChannelTag='';
+    const secLine=item.secondaryLine||'';
+    const stepMatch=secLine.match(/^(DM|Email) — step (\d+) of (\d+)/);
+    if(stepMatch){
+      const secCh=stepMatch[1]==='DM'?'DM':'EMAIL';
+      channelTag=secCh==='DM'?'EMAIL':'DM';
+      secondaryChannelTag=`${secCh} ${stepMatch[2]}/${stepMatch[3]}`;
+    }
+    const hasSecondaryChannel=!!secondaryChannelTag;
+
     const r={
       id:item.id, num:String(this.numMap[item.id]).padStart(2,'0'), handle:'@'+item.handle, reason:item.why,
       open:this.state.openR===item.id, toggle:()=>this.toggleR(item.id),
@@ -170,9 +185,15 @@ class Component extends DCLogic {
       copy:()=>this.copyR(item.id,item.draft), markSent:()=>this.markSentR(item.id,item.account), skip:()=>this.skipR(item.id),
       replyOpen:!!s.replyOpen, replyClosed:!s.replyOpen, replyText:s.replyText||'',
       replyToggle:()=>this.replyToggleR(item.id), replyInput:e=>this.replyInputR(item.id,e.target.value), replySave:()=>this.replySaveR(item.id),
-      secondaryLine:item.secondaryLine||'', hasSecondary:!!(item.secondaryLine),
+      secondaryLine:secLine, hasSecondary:!!(secLine),
+      channelTag, secondaryChannelTag, hasSecondaryChannel,
+      markWon:()=>this.chipR(item.id,'Won'),
+      markLost:()=>this.chipR(item.id,'Lost'),
     };
-    if(item.band==='reply') r.chips=['Keep talking','Call booked','Not now','Wrong person','Lost'].map(l=>({label:l,onClick:()=>this.chipR(item.id,l)}));
+    if(item.band==='reply_needed') r.chips=['Keep talking','Call booked','Not now','Wrong person','Lost'].map(l=>({label:l,onClick:()=>this.chipR(item.id,l)}));
+    else r.chips=[];
+    r.hasChips=r.chips.length>0;
+    r.isReply=item.band==='reply_needed';
     return r;
   }
 
@@ -193,10 +214,15 @@ class Component extends DCLogic {
 
   mkShop(item){
     const s=this.S(item.id);
+    const hasPhone=!!(item.phone&&item.phone!=='—');
+    const emailPrimary=item.track!=='call';
+    // Collapsed card: show due text for each channel separately
+    const emailDueText=emailPrimary?item.dueLine:(item.otherTrack||'');
+    const callDueText=emailPrimary?(item.otherTrack||''):item.dueLine;
     const o={
       id:item.id, store:item.store, city:item.city, dueLine:item.dueLine, phone:item.phone||'—', draft:item.draft, otherTrack:item.otherTrack,
       open:this.state.openS===item.id, toggle:()=>this.toggleS(item.id),
-      isEmail:item.track==='email', isCall:item.track==='call',
+      isEmail:emailPrimary, isCall:!emailPrimary,
       copied:!!s.copied, notCopied:!s.copied,
       copy:()=>this.copyS(item.id,item.draft), markSent:()=>this.markSentS(item.id), skip:()=>this.skipS(item.id),
       answered:!!s.answered, notAnswered:!s.answered, answeredAct:()=>this.answeredS(item.id), noAnswer:()=>this.noAnswerS(item.id),
@@ -204,6 +230,10 @@ class Component extends DCLogic {
       replyToggle:()=>this.replyToggleS(item.id), replyInput:e=>this.replyInputS(item.id,e.target.value),
       callChips:['Visit booked','Interested — follow up','Not now','Wrong number','Lost'].map(l=>({label:l,onClick:()=>this.chipS(item.id,l,'call')})),
       emailChips:['Keep talking','Visit booked','Call booked','Not now','Lost'].map(l=>({label:l,onClick:()=>this.chipS(item.id,l,'email')})),
+      shopHasCall:hasPhone,
+      emailDueText, callDueText,
+      markWon:()=>this.chipS(item.id,'Won','email'),
+      markLost:()=>this.chipS(item.id,'Lost','email'),
     };
     return o;
   }
