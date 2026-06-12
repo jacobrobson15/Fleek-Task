@@ -1,0 +1,420 @@
+
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#FAFAFA;font-family:Inter,system-ui,sans-serif;color:#1A1A1A;-webkit-font-smoothing:antialiased}
+  ::-webkit-scrollbar{height:8px;width:8px}
+  ::-webkit-scrollbar-thumb{background:#E2E2DE;border-radius:8px}
+  textarea:focus,button:focus{outline:none}
+  @keyframes fadein{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+
+<sc-if value="{{ notLoaded }}" hint-placeholder-val="{{ true }}">
+  <div style="height:100vh;display:flex;align-items:center;justify-content:center;font:400 14px Inter;color:#9A9A95">Loading today's run…</div>
+</sc-if>
+
+<sc-if value="{{ loaded }}">
+<div style="min-height:100vh;background:#FAFAFA">
+
+  <!-- TOP BAR -->
+  <div style="position:sticky;top:0;z-index:20;background:rgba(250,250,250,0.85);backdrop-filter:blur(10px);border-bottom:1px solid #F0F0EF">
+    <div style="max-width:880px;margin:0 auto;padding:0 24px;height:60px;display:flex;align-items:center;gap:34px">
+      <span style="font:700 19px Inter;letter-spacing:-0.02em;color:#1A1A1A">Fleek</span>
+      <div style="display:flex;gap:24px;align-items:center">
+        <span onClick="{{ goR }}" style="font:600 14px Inter;cursor:pointer;padding:19px 0;color:{{ tabRColor }};box-shadow:{{ tabRUnderline }}">Resellers</span>
+        <span onClick="{{ goS }}" style="font:600 14px Inter;cursor:pointer;padding:19px 0;color:{{ tabSColor }};box-shadow:{{ tabSUnderline }}">Shops</span>
+      </div>
+      <span onClick="{{ goAdmin }}" style="margin-left:auto;font:500 13px Inter;cursor:pointer;color:{{ tabAdminColor }}">Admin</span>
+    </div>
+  </div>
+
+  <div style="max-width:880px;margin:0 auto;padding:26px 24px 90px">
+
+    <!-- ============ RESELLERS ============ -->
+    <sc-if value="{{ isResellers }}">
+      <!-- account bar -->
+      <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px">
+        <sc-for list="{{ accounts }}" as="acc" hint-placeholder-count="3">
+          <div onClick="{{ acc.onClick }}" style="background:#fff;border-radius:12px;border:1px solid {{ acc.ring }};box-shadow:0 1px 4px rgba(0,0,0,0.06);padding:12px 15px;min-width:178px;cursor:pointer;flex-shrink:0">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <span style="font:600 13.5px Inter;color:#1A1A1A">{{ acc.handle }}</span>
+              <span style="font:500 11px Inter;color:{{ acc.pillColor }};background:{{ acc.pillBg }};padding:3px 9px;border-radius:20px;white-space:nowrap">{{ acc.status }}</span>
+            </div>
+            <div style="height:5px;background:#F0F0EF;border-radius:20px;margin-top:12px;overflow:hidden">
+              <div style="height:100%;background:#E8563A;border-radius:20px;width:{{ acc.pct }}"></div>
+            </div>
+            <div style="font:400 12px Inter;color:#9A9A95;margin-top:8px">{{ acc.usedStr }} DMs today</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- progress line -->
+      <div style="display:flex;align-items:center;gap:12px;margin:20px 0 6px">
+        <span style="font:400 14px Inter;color:#6B7280">{{ progressTextR }}</span>
+        <sc-if value="{{ hasFilter }}">
+          <span onClick="{{ clearFilter }}" style="font:500 12.5px Inter;color:#E8563A;cursor:pointer;background:#FBF1EE;padding:3px 10px;border-radius:20px">{{ filterLabel }} &nbsp;✕</span>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ allCaughtR }}">
+        <div style="text-align:center;padding:70px 0;font:400 15px Inter;color:#9A9A95">You're all caught up for today.</div>
+      </sc-if>
+
+      <!-- REPLIES band -->
+      <sc-if value="{{ replyHas }}">
+        <div style="display:flex;align-items:baseline;gap:9px;margin:24px 0 2px">
+          <span style="font:600 12px Inter;color:#E8563A;letter-spacing:0.08em;text-transform:uppercase">Replies</span>
+          <span style="font:600 13px Inter;color:#E8563A">· {{ replyCount }}</span>
+          <span style="font:400 12px Inter;color:#BDBDB8;margin-left:2px">arrived — need handling</span>
+        </div>
+        <sc-for list="{{ replyGroups }}" as="group" hint-placeholder-count="2">
+          <div style="font:500 12px Inter;color:#AFAFAA;margin:16px 0 9px 2px">{{ group.label }}</div>
+          <sc-for list="{{ group.rows }}" as="row" hint-placeholder-count="3">
+            <div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:9px;overflow:hidden">
+              <div onClick="{{ row.toggle }}" style="display:flex;align-items:flex-start;gap:14px;padding:15px 18px;cursor:pointer">
+                <span style="font:600 21px Inter;color:#D8D8D4;min-width:28px;line-height:1.25">{{ row.num }}</span>
+                <div style="flex:1;min-width:0;padding-top:2px">
+                  <div style="font:600 15px Inter;color:#1A1A1A">{{ row.handle }}</div>
+                  <div style="font:italic 400 13px Inter;color:#6B7280;margin-top:3px">{{ row.reason }}</div>
+                </div>
+              </div>
+              <sc-if value="{{ row.open }}">
+                <div style="padding:0 18px 18px 60px;animation:fadein 0.15s ease">
+                  <sc-if value="{{ row.hasInbound }}">
+                    <div style="background:#FBF1EE;border-left:2px solid #E8563A;border-radius:0 8px 8px 0;padding:11px 14px;font:italic 400 14px Inter;color:#7a5a50;line-height:1.5">“{{ row.lastInbound }}”</div>
+                  </sc-if>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+                    <sc-for list="{{ row.chips }}" as="chip" hint-placeholder-count="5">
+                      <button onClick="{{ chip.onClick }}" style="background:#fff;border:1px solid #E4E4E2;border-radius:20px;padding:7px 14px;font:500 13px Inter;color:#1A1A1A;cursor:pointer" style-hover="border-color:#E8563A;color:#E8563A">{{ chip.label }}</button>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ row.replyClosed }}">
+                    <button onClick="{{ row.replyToggle }}" style="background:none;border:none;color:#9A9A95;font:400 13px Inter;cursor:pointer;padding:12px 0 0;text-decoration:underline;text-underline-offset:3px">They replied…</button>
+                  </sc-if>
+                  <sc-if value="{{ row.replyOpen }}">
+                    <div style="margin-top:12px">
+                      <textarea onInput="{{ row.replyInput }}" value="{{ row.replyText }}" placeholder="Paste what they said…" style="width:100%;border:1px solid #E4E4E2;border-radius:8px;padding:10px 12px;font:400 14px Inter;color:#1A1A1A;resize:vertical;min-height:62px"></textarea>
+                      <div style="margin-top:8px"><button onClick="{{ row.replySave }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:8px 14px;font:500 13px Inter;cursor:pointer">Save reply</button></div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </sc-for>
+      </sc-if>
+
+      <!-- FOLLOW-UPS band -->
+      <sc-if value="{{ fuHas }}">
+        <div style="display:flex;align-items:baseline;gap:9px;margin:28px 0 2px">
+          <span style="font:600 12px Inter;color:#6B7280;letter-spacing:0.08em;text-transform:uppercase">Follow-ups</span>
+          <span style="font:600 13px Inter;color:#6B7280">· {{ fuCount }}</span>
+        </div>
+        <sc-for list="{{ fuGroups }}" as="group" hint-placeholder-count="2">
+          <div style="font:500 12px Inter;color:#AFAFAA;margin:16px 0 9px 2px">{{ group.label }}</div>
+          <sc-for list="{{ group.rows }}" as="row" hint-placeholder-count="4">
+            <div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:9px;overflow:hidden">
+              <div onClick="{{ row.toggle }}" style="display:flex;align-items:flex-start;gap:14px;padding:15px 18px;cursor:pointer">
+                <span style="font:600 21px Inter;color:#D8D8D4;min-width:28px;line-height:1.25">{{ row.num }}</span>
+                <div style="flex:1;min-width:0;padding-top:2px">
+                  <div style="font:600 15px Inter;color:#1A1A1A">{{ row.handle }}</div>
+                  <div style="font:italic 400 13px Inter;color:#6B7280;margin-top:3px">{{ row.reason }}</div>
+                </div>
+              </div>
+              <sc-if value="{{ row.open }}">
+                <div style="padding:0 18px 18px 60px;animation:fadein 0.15s ease">
+                  <sc-if value="{{ row.isStall }}">
+                    <div style="background:#FBF1EE;border-left:2px solid #E8563A;border-radius:0 8px 8px 0;padding:11px 14px;margin-bottom:10px;font:italic 400 13.5px Inter;color:#7a5a50;line-height:1.5">“{{ row.lastInbound }}”</div>
+                  </sc-if>
+                  <div style="background:#F6F6F5;border-radius:10px;padding:14px 16px;font:400 14px Inter;color:#33332F;line-height:1.6;white-space:pre-line">{{ row.draft }}</div>
+                  <sc-if value="{{ row.notCopied }}">
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                      <button onClick="{{ row.copy }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Copy draft</button>
+                      <button onClick="{{ row.markSent }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Mark sent</button>
+                      <button onClick="{{ row.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ row.copied }}">
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                      <button onClick="{{ row.copy }}" style="background:#fff;color:#6B7280;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Copied ✓</button>
+                      <button onClick="{{ row.markSent }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Mark sent</button>
+                      <button onClick="{{ row.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ row.replyClosed }}">
+                    <button onClick="{{ row.replyToggle }}" style="background:none;border:none;color:#9A9A95;font:400 13px Inter;cursor:pointer;padding:12px 0 0;text-decoration:underline;text-underline-offset:3px">They replied…</button>
+                  </sc-if>
+                  <sc-if value="{{ row.replyOpen }}">
+                    <div style="margin-top:12px">
+                      <textarea onInput="{{ row.replyInput }}" value="{{ row.replyText }}" placeholder="Paste what they said…" style="width:100%;border:1px solid #E4E4E2;border-radius:8px;padding:10px 12px;font:400 14px Inter;color:#1A1A1A;resize:vertical;min-height:62px"></textarea>
+                      <div style="margin-top:8px"><button onClick="{{ row.replySave }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:8px 14px;font:500 13px Inter;cursor:pointer">Save reply</button></div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </sc-for>
+      </sc-if>
+
+      <!-- NEW OUTREACH band -->
+      <sc-if value="{{ newHas }}">
+        <div style="display:flex;align-items:baseline;gap:9px;margin:28px 0 2px">
+          <span style="font:600 12px Inter;color:#6B7280;letter-spacing:0.08em;text-transform:uppercase">New outreach</span>
+          <span style="font:600 13px Inter;color:#6B7280">· {{ newCount }}</span>
+        </div>
+        <sc-for list="{{ newGroups }}" as="group" hint-placeholder-count="1">
+          <div style="font:500 12px Inter;color:#AFAFAA;margin:16px 0 9px 2px">{{ group.label }}</div>
+          <sc-for list="{{ group.rows }}" as="row" hint-placeholder-count="4">
+            <div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:9px;overflow:hidden">
+              <div onClick="{{ row.toggle }}" style="display:flex;align-items:flex-start;gap:14px;padding:15px 18px;cursor:pointer">
+                <span style="font:600 21px Inter;color:#D8D8D4;min-width:28px;line-height:1.25">{{ row.num }}</span>
+                <div style="flex:1;min-width:0;padding-top:2px">
+                  <div style="font:600 15px Inter;color:#1A1A1A">{{ row.handle }}</div>
+                  <div style="font:italic 400 13px Inter;color:#6B7280;margin-top:3px">{{ row.reason }}</div>
+                </div>
+              </div>
+              <sc-if value="{{ row.open }}">
+                <div style="padding:0 18px 18px 60px;animation:fadein 0.15s ease">
+                  <div style="background:#F6F6F5;border-radius:10px;padding:14px 16px;font:400 14px Inter;color:#33332F;line-height:1.6;white-space:pre-line">{{ row.draft }}</div>
+                  <sc-if value="{{ row.notCopied }}">
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                      <button onClick="{{ row.copy }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Copy draft</button>
+                      <button onClick="{{ row.markSent }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Mark sent</button>
+                      <button onClick="{{ row.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ row.copied }}">
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                      <button onClick="{{ row.copy }}" style="background:#fff;color:#6B7280;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Copied ✓</button>
+                      <button onClick="{{ row.markSent }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Mark sent</button>
+                      <button onClick="{{ row.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </sc-for>
+      </sc-if>
+
+      <!-- done strip -->
+      <div style="margin-top:26px">
+        <div onClick="{{ toggleDoneR }}" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font:500 13px Inter;color:#9A9A95">
+          <span>{{ doneArrowR }}</span> Done today · {{ doneCountR }}
+        </div>
+        <sc-if value="{{ showDoneR }}">
+          <div style="margin-top:12px;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);padding:6px 18px;animation:fadein 0.15s ease">
+            <sc-for list="{{ doneRowsR }}" as="d" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F4F4F2">
+                <span style="font:500 14px Inter;color:#8A8A85">{{ d.handle }}</span>
+                <span style="font:500 12px Inter;color:#A3A39E">{{ d.result }}</span>
+              </div>
+            </sc-for>
+            <div style="padding:11px 0;font:400 12.5px Inter;color:#BDBDB8">{{ doneEarlierR }}</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ showActivityR }}">
+        <div style="text-align:right;margin-top:18px"><span onClick="{{ downloadR }}" style="font:500 13px Inter;color:#6B7280;cursor:pointer">Download today's activity →</span></div>
+      </sc-if>
+    </sc-if>
+
+    <!-- ============ SHOPS ============ -->
+    <sc-if value="{{ isShops }}">
+      <div style="margin:2px 0 4px">
+        <span style="font:400 14px Inter;color:#6B7280">{{ progressTextS }}</span>
+      </div>
+
+      <sc-if value="{{ allCaughtS }}">
+        <div style="text-align:center;padding:70px 0;font:400 15px Inter;color:#9A9A95">Nothing due in any city today.</div>
+      </sc-if>
+
+      <sc-for list="{{ cities }}" as="city" hint-placeholder-count="3">
+        <div style="margin-top:30px">
+          <div style="font:600 18px Inter;color:#1A1A1A;padding-bottom:10px;border-bottom:1px solid #F0F0EF">{{ city.city }}</div>
+          <sc-if value="{{ city.showPrompt }}">
+            <div style="background:#fff;border:1px solid #F2EDEB;border-left:3px solid #E8563A;border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin:14px 0 4px;box-shadow:0 1px 4px rgba(0,0,0,0.05)">
+              <span style="font:600 15px Inter;color:#1A1A1A">{{ city.promptText }}</span>
+              <button onClick="{{ city.exportVisit }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer;white-space:nowrap">Export visit list</button>
+            </div>
+          </sc-if>
+          <div style="margin-top:14px">
+            <sc-for list="{{ city.shops }}" as="shop" hint-placeholder-count="4">
+              <div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:9px;overflow:hidden">
+                <div onClick="{{ shop.toggle }}" style="padding:15px 18px;cursor:pointer">
+                  <div style="font:600 15px Inter;color:#1A1A1A">{{ shop.store }}<span style="font:400 13px Inter;color:#A3A39E;margin-left:8px">{{ shop.city }}</span></div>
+                  <div style="font:400 13px Inter;color:#6B7280;margin-top:3px">{{ shop.dueLine }}</div>
+                </div>
+                <sc-if value="{{ shop.open }}">
+                  <div style="padding:0 18px 18px 18px;animation:fadein 0.15s ease">
+                    <!-- EMAIL track -->
+                    <sc-if value="{{ shop.isEmail }}">
+                      <div style="background:#F6F6F5;border-radius:10px;padding:14px 16px;font:400 14px Inter;color:#33332F;line-height:1.6;white-space:pre-line">{{ shop.draft }}</div>
+                      <sc-if value="{{ shop.notCopied }}">
+                        <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                          <button onClick="{{ shop.copy }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Copy draft</button>
+                          <button onClick="{{ shop.markSent }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Mark sent</button>
+                          <button onClick="{{ shop.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{ shop.copied }}">
+                        <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                          <button onClick="{{ shop.copy }}" style="background:#fff;color:#6B7280;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">Copied ✓</button>
+                          <button onClick="{{ shop.markSent }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:9px 17px;font:500 14px Inter;cursor:pointer">Mark sent</button>
+                          <button onClick="{{ shop.skip }}" style="background:none;border:none;color:#9A9A95;font:500 14px Inter;cursor:pointer;padding:9px 6px">Skip today</button>
+                        </div>
+                      </sc-if>
+                      <div style="font:400 13px Inter;color:#A3A39E;margin-top:14px">{{ shop.otherTrack }}</div>
+                      <sc-if value="{{ shop.replyClosed }}">
+                        <button onClick="{{ shop.replyToggle }}" style="background:none;border:none;color:#9A9A95;font:400 13px Inter;cursor:pointer;padding:10px 0 0;text-decoration:underline;text-underline-offset:3px">They replied…</button>
+                      </sc-if>
+                      <sc-if value="{{ shop.replyOpen }}">
+                        <div style="margin-top:12px">
+                          <textarea onInput="{{ shop.replyInput }}" value="{{ shop.replyText }}" placeholder="Paste what they said…" style="width:100%;border:1px solid #E4E4E2;border-radius:8px;padding:10px 12px;font:400 14px Inter;color:#1A1A1A;resize:vertical;min-height:60px"></textarea>
+                          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+                            <sc-for list="{{ shop.emailChips }}" as="chip" hint-placeholder-count="5">
+                              <button onClick="{{ chip.onClick }}" style="background:#fff;border:1px solid #E4E4E2;border-radius:20px;padding:7px 14px;font:500 13px Inter;color:#1A1A1A;cursor:pointer" style-hover="border-color:#E8563A;color:#E8563A">{{ chip.label }}</button>
+                            </sc-for>
+                          </div>
+                        </div>
+                      </sc-if>
+                    </sc-if>
+                    <!-- CALL track -->
+                    <sc-if value="{{ shop.isCall }}">
+                      <sc-if value="{{ shop.notAnswered }}">
+                        <a href="tel:{{ shop.phone }}" style="display:block;font:600 26px Inter;color:#1A1A1A;text-decoration:none;letter-spacing:-0.01em;padding:4px 0 2px">{{ shop.phone }}</a>
+                        <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+                          <button onClick="{{ shop.answeredAct }}" style="background:#1A1A1A;color:#fff;border:none;border-radius:8px;padding:9px 18px;font:500 14px Inter;cursor:pointer">Answered</button>
+                          <button onClick="{{ shop.noAnswer }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:9px 16px;font:500 14px Inter;cursor:pointer">No answer</button>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{ shop.answered }}">
+                        <div style="font:500 13px Inter;color:#6B7280;margin-bottom:10px">How did it go?</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px">
+                          <sc-for list="{{ shop.callChips }}" as="chip" hint-placeholder-count="5">
+                            <button onClick="{{ chip.onClick }}" style="background:#fff;border:1px solid #E4E4E2;border-radius:20px;padding:7px 14px;font:500 13px Inter;color:#1A1A1A;cursor:pointer" style-hover="border-color:#E8563A;color:#E8563A">{{ chip.label }}</button>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                      <div style="font:400 13px Inter;color:#A3A39E;margin-top:14px">{{ shop.otherTrack }}</div>
+                    </sc-if>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+
+      <div style="margin-top:26px">
+        <div onClick="{{ toggleDoneS }}" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font:500 13px Inter;color:#9A9A95">
+          <span>{{ doneArrowS }}</span> Done today · {{ doneCountS }}
+        </div>
+        <sc-if value="{{ showDoneS }}">
+          <div style="margin-top:12px;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);padding:6px 18px;animation:fadein 0.15s ease">
+            <sc-for list="{{ doneRowsS }}" as="d" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid #F4F4F2">
+                <span style="font:500 14px Inter;color:#8A8A85">{{ d.store }}</span>
+                <span style="font:500 12px Inter;color:#A3A39E;text-align:right">{{ d.result }}</span>
+              </div>
+            </sc-for>
+            <div style="padding:11px 0;font:400 12.5px Inter;color:#BDBDB8">{{ doneEarlierS }}</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ showActivityS }}">
+        <div style="text-align:right;margin-top:18px"><span onClick="{{ downloadS }}" style="font:500 13px Inter;color:#6B7280;cursor:pointer">Download today's activity →</span></div>
+      </sc-if>
+    </sc-if>
+
+    <!-- ============ ADMIN ============ -->
+    <sc-if value="{{ isAdmin }}">
+      <div style="font:600 22px Inter;color:#1A1A1A;margin:4px 0 22px">Admin</div>
+
+      <div style="font:600 15px Inter;color:#1A1A1A;margin-bottom:12px">Upload</div>
+      <div onClick="{{ admin.reupload }}" style="border:1.5px dashed #D9D9D5;border-radius:12px;padding:34px;text-align:center;background:#fff;cursor:pointer;font:400 14px Inter;color:#9A9A95">Drop your morning CSV here or click to upload.</div>
+
+      <div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.07);padding:18px;margin-top:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <span style="font:600 14px Inter;color:#1A1A1A">{{ admin.fileName }}</span>
+          <span style="font:400 12.5px Inter;color:#9A9A95">{{ admin.uploadNote }}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#F0F0EF;border-radius:10px;overflow:hidden">
+          <sc-for list="{{ admin.statCells }}" as="cell" hint-placeholder-count="4">
+            <div style="background:#fff;padding:18px 18px">
+              <div style="font:600 28px Inter;color:{{ cell.color }};letter-spacing:-0.02em">{{ cell.n }}</div>
+              <div style="font:400 13px Inter;color:#6B7280;margin-top:3px">{{ cell.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:14px;margin-top:14px">
+          <button onClick="{{ admin.reupload }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:8px 15px;font:500 13px Inter;cursor:pointer">Re-upload same file</button>
+          <sc-if value="{{ admin.reuploaded }}">
+            <button onClick="{{ admin.reset }}" style="background:none;border:none;color:#9A9A95;font:500 13px Inter;cursor:pointer">Reset</button>
+          </sc-if>
+        </div>
+      </div>
+
+      <!-- flagged rows -->
+      <sc-if value="{{ admin.hasFlags }}">
+        <div style="font:500 13px Inter;color:#9A9A95;margin:26px 0 4px">Needs review · {{ admin.flagCount }}</div>
+        <sc-for list="{{ admin.flags }}" as="f" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 2px;border-bottom:1px solid #F0F0EF">
+            <div style="min-width:0">
+              <span style="font:600 14px Inter;color:#1A1A1A">{{ f.name }}</span>
+              <span style="font:italic 400 13px Inter;color:#6B7280;margin-left:8px">{{ f.reason }}</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0">
+              <button onClick="{{ f.pickA }}" style="{{ f.aStyle }}">{{ f.a }}</button>
+              <button onClick="{{ f.pickB }}" style="{{ f.bStyle }}">{{ f.b }}</button>
+            </div>
+          </div>
+        </sc-for>
+      </sc-if>
+
+      <!-- accounts -->
+      <div style="font:600 15px Inter;color:#1A1A1A;margin:32px 0 12px">Instagram accounts</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <sc-for list="{{ adminAccounts }}" as="acc" hint-placeholder-count="3">
+          <div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);padding:15px 16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <span style="font:600 14px Inter;color:#1A1A1A">{{ acc.handle }}</span>
+              <span style="font:500 11px Inter;color:{{ acc.pillColor }};background:{{ acc.pillBg }};padding:3px 9px;border-radius:20px">{{ acc.status }}</span>
+            </div>
+            <div style="height:5px;background:#F0F0EF;border-radius:20px;margin-top:12px;overflow:hidden">
+              <div style="height:100%;background:#E8563A;border-radius:20px;width:{{ acc.pct }}"></div>
+            </div>
+            <div style="font:400 12px Inter;color:#9A9A95;margin-top:8px">{{ acc.usedStr }} DMs · {{ acc.live }} mid-conversation</div>
+            <div style="display:flex;gap:16px;margin-top:12px">
+              <span style="font:500 12.5px Inter;color:#6B7280;cursor:pointer">Rename</span>
+              <span style="font:500 12.5px Inter;color:#6B7280;cursor:pointer">Pause</span>
+              <span onClick="{{ acc.onRemove }}" style="font:500 12.5px Inter;color:#6B7280;cursor:pointer">Remove</span>
+            </div>
+            <sc-if value="{{ acc.warn }}">
+              <div style="margin-top:12px;background:#FBF1EE;border-radius:8px;padding:11px 13px;animation:fadein 0.15s ease">
+                <div style="font:400 13px Inter;color:#7a5a50;line-height:1.5">{{ acc.warnText }}</div>
+                <div style="display:flex;gap:10px;margin-top:10px">
+                  <button onClick="{{ acc.confirmRemove }}" style="background:#E8563A;color:#fff;border:none;border-radius:8px;padding:7px 13px;font:500 13px Inter;cursor:pointer">Flag &amp; remove</button>
+                  <button onClick="{{ acc.cancelRemove }}" style="background:none;border:none;color:#9A9A95;font:500 13px Inter;cursor:pointer">Cancel</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <div onClick="{{ admin.addAccount }}" style="border:1.5px dashed #D9D9D5;border-radius:12px;padding:15px 16px;display:flex;align-items:center;justify-content:center;min-height:90px;cursor:pointer;font:500 14px Inter;color:#9A9A95">+ Add account</div>
+      </div>
+      <sc-if value="{{ admin.added2 }}">
+        <div style="font:400 13px Inter;color:#6B7280;margin-top:12px">New account queued — it grows tomorrow's DM pool.</div>
+      </sc-if>
+    </sc-if>
+
+  </div>
+</div>
+</sc-if>
