@@ -200,6 +200,7 @@ def build_fleek_data() -> dict:
                     "city": city,
                     "phone": phone,
                     "track": track,
+                    "band": band,
                     "warm": False,
                     "dueLine": due_line,
                     "draft": draft,

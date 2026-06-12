@@ -252,6 +252,7 @@ class Component extends DCLogic {
       callChips:['Visit booked','Interested — follow up','Not now','Wrong number','Lost'].map(l=>({label:l,onClick:()=>this.chipS(item.id,l,'call')})),
       emailChips:['Keep talking','Visit booked','Call booked','Not now','Lost'].map(l=>({label:l,onClick:()=>this.chipS(item.id,l,'email')})),
       shopHasCall:hasPhone, noPhone:!hasPhone,
+      band: item.band||'new_outreach',
       emailTag, callTag, emailTagClass, callTagClass,
       emailDueLabel:item.emailDueLabel||'',
       callDueLabel:item.callDueLabel||'',
@@ -321,9 +322,16 @@ class Component extends DCLogic {
     v.downloadR=()=>this.downloadActivityR();
 
     // shops
+    const SHOP_BAND_ORDER=['reply_needed','follow_ups_due','new_outreach','manual_review'];
+    const SHOP_BAND_LABELS={reply_needed:'Replies',follow_ups_due:'Follow-ups',new_outreach:'New outreach',manual_review:'Review'};
     v.cities=D.shops.cities.map(c=>{
       const shops=c.shops.filter(it=>!this.S(it.id).terminal).map(it=>this.mkShop(it));
-      return {city:c.city, shops, showPrompt:!!c.showPrompt&&shops.length>0, warmCount:c.warmCount, promptText:c.warmCount+' shops warm in '+c.city, exportVisit:()=>this.exportVisit(c.city)};
+      const grouped={};
+      shops.forEach(s=>{const b=s.band||'new_outreach';(grouped[b]=grouped[b]||[]).push(s);});
+      const bandGroups=SHOP_BAND_ORDER.filter(b=>grouped[b]&&grouped[b].length>0).map(b=>({label:SHOP_BAND_LABELS[b],count:grouped[b].length,shops:grouped[b]}));
+      const multiGroup=bandGroups.length>1;
+      bandGroups.forEach(g=>g.showLabel=multiGroup);
+      return {city:c.city, bandGroups, shops, showPrompt:!!c.showPrompt&&shops.length>0, warmCount:c.warmCount, promptText:c.warmCount+' shops warm in '+c.city, exportVisit:()=>this.exportVisit(c.city)};
     }).filter(c=>c.shops.length>0);
     v.allCaughtS=v.cities.length===0;
     const totalS=D.shops.doneStart+D.shops.total;
