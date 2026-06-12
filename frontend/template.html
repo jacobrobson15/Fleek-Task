@@ -89,12 +89,19 @@
                 <div style="flex:1;min-width:0;padding-top:2px">
                   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                     <span style="font:600 15px Inter;color:#1A1A1A">{{ row.handle }}</span>
-                    <span class="ch-tag ch-tag-primary">{{ row.channelTag }}</span>
-                    <sc-if value="{{ row.hasSecondaryChannel }}">
-                      <span class="ch-tag ch-tag-secondary">{{ row.secondaryChannelTag }}</span>
+                    <sc-if value="{{ row.hasDmTag }}">
+                      <span class="{{ row.dmTagClass }}">{{ row.dmTag }}</span>
+                    </sc-if>
+                    <sc-if value="{{ row.hasEmailTag }}">
+                      <span class="{{ row.emailTagClass }}">{{ row.emailTag }}</span>
                     </sc-if>
                   </div>
-                  <div style="font:italic 400 13px Inter;color:#6B7280;margin-top:3px">{{ row.reason }}</div>
+                  <sc-if value="{{ row.hasStatusContext }}">
+                    <div style="font:italic 400 13px Inter;color:#6B7280;margin-top:3px">{{ row.statusContext }}</div>
+                  </sc-if>
+                  <sc-if value="{{ row.hasStatsLine }}">
+                    <div style="font:400 12px Inter;color:#9A9A95;margin-top:2px">{{ row.statsLine }}</div>
+                  </sc-if>
                 </div>
               </div>
               <!-- expanded -->
@@ -147,12 +154,19 @@
                 <div style="flex:1;min-width:0;padding-top:2px">
                   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                     <span style="font:600 15px Inter;color:#1A1A1A">{{ row.handle }}</span>
-                    <span class="ch-tag ch-tag-primary">{{ row.channelTag }}</span>
-                    <sc-if value="{{ row.hasSecondaryChannel }}">
-                      <span class="ch-tag ch-tag-secondary">{{ row.secondaryChannelTag }}</span>
+                    <sc-if value="{{ row.hasDmTag }}">
+                      <span class="{{ row.dmTagClass }}">{{ row.dmTag }}</span>
+                    </sc-if>
+                    <sc-if value="{{ row.hasEmailTag }}">
+                      <span class="{{ row.emailTagClass }}">{{ row.emailTag }}</span>
                     </sc-if>
                   </div>
-                  <div style="font:italic 400 13px Inter;color:#6B7280;margin-top:3px">{{ row.reason }}</div>
+                  <sc-if value="{{ row.hasStatusContext }}">
+                    <div style="font:italic 400 13px Inter;color:#6B7280;margin-top:3px">{{ row.statusContext }}</div>
+                  </sc-if>
+                  <sc-if value="{{ row.hasStatsLine }}">
+                    <div style="font:400 12px Inter;color:#9A9A95;margin-top:2px">{{ row.statsLine }}</div>
+                  </sc-if>
                 </div>
               </div>
               <!-- expanded -->
@@ -221,12 +235,19 @@
                 <div style="flex:1;min-width:0;padding-top:2px">
                   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                     <span style="font:600 15px Inter;color:#1A1A1A">{{ row.handle }}</span>
-                    <span class="ch-tag ch-tag-primary">{{ row.channelTag }}</span>
-                    <sc-if value="{{ row.hasSecondaryChannel }}">
-                      <span class="ch-tag ch-tag-secondary">{{ row.secondaryChannelTag }}</span>
+                    <sc-if value="{{ row.hasDmTag }}">
+                      <span class="{{ row.dmTagClass }}">{{ row.dmTag }}</span>
+                    </sc-if>
+                    <sc-if value="{{ row.hasEmailTag }}">
+                      <span class="{{ row.emailTagClass }}">{{ row.emailTag }}</span>
                     </sc-if>
                   </div>
-                  <div style="font:italic 400 13px Inter;color:#6B7280;margin-top:3px">{{ row.reason }}</div>
+                  <sc-if value="{{ row.hasStatusContext }}">
+                    <div style="font:italic 400 13px Inter;color:#6B7280;margin-top:3px">{{ row.statusContext }}</div>
+                  </sc-if>
+                  <sc-if value="{{ row.hasStatsLine }}">
+                    <div style="font:400 12px Inter;color:#9A9A95;margin-top:2px">{{ row.statsLine }}</div>
+                  </sc-if>
                 </div>
               </div>
               <!-- expanded -->

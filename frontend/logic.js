@@ -162,31 +162,47 @@ class Component extends DCLogic {
   mkRow(item){
     const s=this.S(item.id);
 
-    // Derive primary channel tag and secondary channel tag from secondaryLine.
-    // secondaryLine starts with "DM — step X of 4 ..." when primary is email,
-    // or "Email — step X of 4 ..." when primary is DM.
-    let channelTag='DM';
-    let secondaryChannelTag='';
-    const secLine=item.secondaryLine||'';
-    const stepMatch=secLine.match(/^(DM|Email) — step (\d+) of (\d+)/);
-    if(stepMatch){
-      const secCh=stepMatch[1]==='DM'?'DM':'EMAIL';
-      channelTag=secCh==='DM'?'EMAIL':'DM';
-      secondaryChannelTag=`${secCh} ${stepMatch[2]}/${stepMatch[3]}`;
+    // Channel tags with step counts — use structured backend fields
+    const primaryIsDm=(item.primaryChannel||'dm')!=='email';
+    const dmTag=item.dmActive?`DM ${item.dmStep||0}/4`:null;
+    const emailTag=item.emailActive?`EMAIL ${item.emailStep||0}/4`:null;
+    const hasDmTag=!!dmTag;
+    const hasEmailTag=!!emailTag;
+    const dmTagClass=`ch-tag ${primaryIsDm?'ch-tag-primary':'ch-tag-secondary'}`;
+    const emailTagClass=`ch-tag ${primaryIsDm?'ch-tag-secondary':'ch-tag-primary'}`;
+
+    // Split why into italic status context + stats line
+    const WHY=item.why||'';
+    const STATUS_PREFIXES=['warm reply:','objection:','replied:','day-one'];
+    let statusContext='';
+    let statsLine=WHY;
+    if(STATUS_PREFIXES.some(p=>WHY.startsWith(p))){
+      const sep=WHY.indexOf(' · ');
+      if(sep!==-1){statusContext=WHY.substring(0,sep);statsLine=WHY.substring(sep+3);}
+      else{statusContext=WHY;statsLine='';}
     }
-    const hasSecondaryChannel=!!secondaryChannelTag;
+    // For follow-up stalls, replace with time-aware phrasing
+    const inbound=s.inboundLogged||item.lastInbound;
+    if(item.band==='follow_ups_due'&&inbound&&item.overdueDays>0){
+      const d=item.overdueDays;
+      statusContext=`replied ${d} day${d!==1?'s':''} ago — no follow-up sent`;
+    }
+    const hasStatusContext=!!statusContext;
+    const hasStatsLine=!!statsLine;
 
     const r={
-      id:item.id, num:String(this.numMap[item.id]).padStart(2,'0'), handle:'@'+item.handle, reason:item.why,
+      id:item.id, num:String(this.numMap[item.id]).padStart(2,'0'), handle:'@'+item.handle, reason:WHY,
       open:this.state.openR===item.id, toggle:()=>this.toggleR(item.id),
       isStall:!!item.isStall, draft:item.draft,
-      lastInbound:s.inboundLogged||item.lastInbound, hasInbound:!!(s.inboundLogged||item.lastInbound),
+      lastInbound:inbound, hasInbound:!!inbound,
       copied:!!s.copied, notCopied:!s.copied,
       copy:()=>this.copyR(item.id,item.draft), markSent:()=>this.markSentR(item.id,item.account), skip:()=>this.skipR(item.id),
       replyOpen:!!s.replyOpen, replyClosed:!s.replyOpen, replyText:s.replyText||'',
       replyToggle:()=>this.replyToggleR(item.id), replyInput:e=>this.replyInputR(item.id,e.target.value), replySave:()=>this.replySaveR(item.id),
-      secondaryLine:secLine, hasSecondary:!!(secLine),
-      channelTag, secondaryChannelTag, hasSecondaryChannel,
+      secondaryLine:item.secondaryLine||'', hasSecondary:!!(item.secondaryLine),
+      dmTag:dmTag||'DM', emailTag:emailTag||'EMAIL',
+      hasDmTag, hasEmailTag, dmTagClass, emailTagClass,
+      statusContext, statsLine, hasStatusContext, hasStatsLine,
       markWon:()=>this.chipR(item.id,'Won'),
       markLost:()=>this.chipR(item.id,'Lost'),
     };

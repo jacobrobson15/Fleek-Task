@@ -208,6 +208,12 @@ def build_fleek_data() -> dict:
                     except Exception:
                         secondary_line = ""
 
+                dm_active_v   = bool(r.get("dm_active"))    if r is not None else False
+                email_active_v = bool(r.get("email_active")) if r is not None else False
+                dm_step_v     = int(r.get("dm_step")    or 0) if r is not None else 0
+                email_step_v  = int(r.get("email_step") or 0) if r is not None else 0
+                overdue_v     = int(r.get("overdue_days") or 0) if r is not None else 0
+
                 item: dict = {
                     "id": lid,
                     "handle": handle or lid,
@@ -218,6 +224,12 @@ def build_fleek_data() -> dict:
                     "why": card.get("why", ""),
                     "draft": draft,
                     "secondaryLine": secondary_line,
+                    "primaryChannel": channel,
+                    "dmActive": dm_active_v,
+                    "dmStep": dm_step_v,
+                    "emailActive": email_active_v,
+                    "emailStep": email_step_v,
+                    "overdueDays": overdue_v,
                 }
 
                 if band == scoring.BAND_REPLY:
