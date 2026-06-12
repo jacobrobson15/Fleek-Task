@@ -5,8 +5,14 @@ class Component extends DCLogic {
     filter:null, openR:null, openS:null,
     showDoneR:false, showDoneS:false,
     items:{}, accounts:{}, actedR:0, actedS:0,
-    flagChoices:{}, reuploaded:false, removeWarn:null, addedAccount:false,
+    removedIds:[], extraAccounts:[], showAddForm:false, newHandle:'', removeWarn:null,
   };
+
+  adminBase = [
+    {id:'ig_001', handle:'fleek_vintage_uk', cap:40, used:14, live:31},
+    {id:'ig_002', handle:'fleek_archive_eu', cap:40, used:20, live:12},
+    {id:'ig_003', handle:'fleek_sourcing',   cap:40, used:40, live:23},
+  ];
 
   componentDidMount(){
     const init=()=>{
@@ -88,6 +94,25 @@ class Component extends DCLogic {
     this.downloadCSV('fleek_shops_activity.csv',rows);
   }
 
+  buildAdminAccounts(){
+    const st=this.state;
+    const all=[...this.adminBase,...st.extraAccounts].filter(a=>!st.removedIds.includes(a.id));
+    return all.map(a=>{
+      const isLimit=a.used>=a.cap;
+      const status=isLimit?'At limit':'Active';
+      const pillColor=isLimit?'#E8563A':'#6B7280';
+      return {
+        id:a.id, handle:'@'+a.handle, usedStr:a.used+'/'+a.cap,
+        pct:Math.round(a.used/a.cap*100)+'%', status, pillColor, pillBg:'#F4F4F3', live:a.live||0,
+        warn:st.removeWarn===a.id,
+        warnText:(a.live||0)+' leads are mid-conversation on this account. They will be flagged for review — nothing is reassigned.',
+        onRemove:()=>this.setState({removeWarn:a.id}),
+        confirmRemove:()=>this.setState(s=>({removeWarn:null,removedIds:[...s.removedIds,a.id]})),
+        cancelRemove:()=>this.setState({removeWarn:null}),
+      };
+    });
+  }
+
   mkRow(item){
     const s=this.S(item.id);
     const r={
@@ -146,7 +171,7 @@ class Component extends DCLogic {
       tabRUnderline:st.page==='resellers'?'inset 0 -2px 0 #E8563A':'none',
       tabSUnderline:st.page==='shops'?'inset 0 -2px 0 #E8563A':'none',
     };
-    // accounts
+    // accounts (reseller bar)
     v.accounts=D.accounts.map(a=>this.acctView(a));
     v.hasFilter=!!st.filter;
     v.filterLabel=st.filter?('@'+this.acct(st.filter).handle):'';
@@ -187,33 +212,19 @@ class Component extends DCLogic {
     v.doneEarlierS=D.shops.doneStart+' completed earlier today';
     v.downloadS=()=>this.downloadActivityS();
     // admin
-    const A=D.admin;
-    const stats=st.reuploaded?A.reupload:{added:A.added,updated:A.updated,merged:A.merged,needsReview:A.needsReview};
-    const chipSel='background:#E8563A;color:#fff;border:1px solid #E8563A;border-radius:20px;padding:6px 13px;font:500 13px Inter;cursor:pointer';
-    const chipUn='background:#fff;color:#6B7280;border:1px solid #E4E4E2;border-radius:20px;padding:6px 13px;font:500 13px Inter;cursor:pointer';
-    const liveMap={uk:31,eu:12,src:23};
     v.admin={
-      fileName:A.fileName,
-      uploadNote:st.reuploaded?'Same file — already processed':'Processed just now',
-      statCells:[
-        {n:stats.added,label:'Leads added',color:stats.added?'#1A1A1A':'#C8C8C3'},
-        {n:stats.updated,label:'Leads updated',color:stats.updated?'#1A1A1A':'#C8C8C3'},
-        {n:stats.merged,label:'Duplicates merged',color:stats.merged?'#1A1A1A':'#C8C8C3'},
-        {n:stats.needsReview,label:'Needs review',color:stats.needsReview?'#E8563A':'#C8C8C3'},
-      ],
-      reuploaded:st.reuploaded, reupload:()=>this.setState({reuploaded:true}), reset:()=>this.setState({reuploaded:false}),
-      hasFlags:!st.reuploaded&&A.flags.length>0, flagCount:A.flags.length,
-      flags:A.flags.map((f,i)=>({name:f.name,reason:f.reason,a:f.a,b:f.b,
-        aStyle:st.flagChoices[i]==='a'?chipSel:chipUn, bStyle:st.flagChoices[i]==='b'?chipSel:chipUn,
-        pickA:()=>this.setState(s=>({flagChoices:{...s.flagChoices,[i]:'a'}})), pickB:()=>this.setState(s=>({flagChoices:{...s.flagChoices,[i]:'b'}})) })),
-      addAccount:()=>this.setState({addedAccount:true}), added2:st.addedAccount,
+      showAddForm:st.showAddForm, showAddBtn:!st.showAddForm,
+      newHandle:st.newHandle||'',
+      handleInput:e=>this.setState({newHandle:e.target.value}),
+      addAccount:()=>this.setState({showAddForm:true,newHandle:''}),
+      cancelAdd:()=>this.setState({showAddForm:false,newHandle:''}),
+      saveAccount:()=>{
+        const h=(st.newHandle||'').replace(/^@/,'').trim(); if(!h)return;
+        const id='ig_'+String(Date.now()).slice(-4);
+        this.setState(s=>({extraAccounts:[...s.extraAccounts,{id,handle:h,cap:40,used:0,live:0}],showAddForm:false,newHandle:''}));
+      },
     };
-    v.adminAccounts=D.accounts.map(a=>{
-      const view=this.acctView(a); const live=liveMap[a.id]||0;
-      return {...view, live, warn:st.removeWarn===a.id,
-        warnText:live+' leads are mid-conversation on this account. They\u2019ll be flagged for review — nothing is reassigned.',
-        onRemove:()=>this.setState({removeWarn:a.id}), confirmRemove:()=>this.setState({removeWarn:null}), cancelRemove:()=>this.setState({removeWarn:null}) };
-    });
+    v.adminAccounts=this.buildAdminAccounts();
     return v;
   }
 }

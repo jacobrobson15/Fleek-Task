@@ -338,48 +338,68 @@
     <sc-if value="{{ isAdmin }}">
       <div style="font:600 22px Inter;color:#1A1A1A;margin:4px 0 22px">Admin</div>
 
-      <div style="font:600 15px Inter;color:#1A1A1A;margin-bottom:12px">Upload</div>
-      <div onClick="{{ admin.reupload }}" style="border:1.5px dashed #D9D9D5;border-radius:12px;padding:34px;text-align:center;background:#fff;cursor:pointer;font:400 14px Inter;color:#9A9A95">Drop your morning CSV here or click to upload.</div>
+      <!-- 1. Upload pipeline -->
+      <div style="font:600 15px Inter;color:#1A1A1A;margin-bottom:10px">Upload pipeline</div>
+      <div style="border:1.5px dashed #D9D9D5;border-radius:12px;padding:34px;text-align:center;background:#fff;cursor:pointer">
+        <div style="font:400 14px Inter;color:#9A9A95">Drop your morning CSV here or click to upload.</div>
+        <div style="font:400 12.5px Inter;color:#BDBDB8;margin-top:8px">.csv · .txt · .xls · .xlsx</div>
+      </div>
 
-      <div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.07);padding:18px;margin-top:14px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <span style="font:600 14px Inter;color:#1A1A1A">{{ admin.fileName }}</span>
-          <span style="font:400 12.5px Inter;color:#9A9A95">{{ admin.uploadNote }}</span>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#F0F0EF;border-radius:10px;overflow:hidden">
-          <sc-for list="{{ admin.statCells }}" as="cell" hint-placeholder-count="4">
-            <div style="background:#fff;padding:18px 18px">
-              <div style="font:600 28px Inter;color:{{ cell.color }};letter-spacing:-0.02em">{{ cell.n }}</div>
-              <div style="font:400 13px Inter;color:#6B7280;margin-top:3px">{{ cell.label }}</div>
-            </div>
-          </sc-for>
-        </div>
-        <div style="display:flex;gap:14px;margin-top:14px">
-          <button onClick="{{ admin.reupload }}" style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:8px 15px;font:500 13px Inter;cursor:pointer">Re-upload same file</button>
-          <sc-if value="{{ admin.reuploaded }}">
-            <button onClick="{{ admin.reset }}" style="background:none;border:none;color:#9A9A95;font:500 13px Inter;cursor:pointer">Reset</button>
-          </sc-if>
+      <!-- 2. Master pipeline -->
+      <div style="font:600 15px Inter;color:#1A1A1A;margin:28px 0 10px">Master pipeline</div>
+      <div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.07);padding:16px 18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;row-gap:10px">
+          <div>
+            <div style="font:600 14px Inter;color:#1A1A1A">fleek_master_pipeline.csv</div>
+            <div style="font:400 12.5px Inter;color:#9A9A95;margin-top:2px">265 leads · updated today 08:14</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:7px 13px;font:500 13px Inter;cursor:pointer">Download master CSV</button>
+            <button style="background:#fff;color:#1A1A1A;border:1px solid #E4E4E2;border-radius:8px;padding:7px 13px;font:500 13px Inter;cursor:pointer">Replace master CSV</button>
+          </div>
         </div>
       </div>
 
-      <!-- flagged rows -->
-      <sc-if value="{{ admin.hasFlags }}">
-        <div style="font:500 13px Inter;color:#9A9A95;margin:26px 0 4px">Needs review · {{ admin.flagCount }}</div>
-        <sc-for list="{{ admin.flags }}" as="f" hint-placeholder-count="4">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 2px;border-bottom:1px solid #F0F0EF">
-            <div style="min-width:0">
-              <span style="font:600 14px Inter;color:#1A1A1A">{{ f.name }}</span>
-              <span style="font:italic 400 13px Inter;color:#6B7280;margin-left:8px">{{ f.reason }}</span>
-            </div>
-            <div style="display:flex;gap:8px;flex-shrink:0">
-              <button onClick="{{ f.pickA }}" style="{{ f.aStyle }}">{{ f.a }}</button>
-              <button onClick="{{ f.pickB }}" style="{{ f.bStyle }}">{{ f.b }}</button>
-            </div>
-          </div>
-        </sc-for>
-      </sc-if>
+      <!-- 3. Upload history -->
+      <div style="font:600 15px Inter;color:#1A1A1A;margin:28px 0 10px">Upload history</div>
+      <div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.07);overflow:hidden">
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="border-bottom:1px solid #F0F0EF">
+              <th style="text-align:left;padding:11px 16px;font:500 12px Inter;color:#9A9A95">File</th>
+              <th style="text-align:left;padding:11px 16px;font:500 12px Inter;color:#9A9A95">Outcome</th>
+              <th style="text-align:left;padding:11px 16px;font:500 12px Inter;color:#9A9A95">Method</th>
+              <th style="text-align:left;padding:11px 16px;font:500 12px Inter;color:#9A9A95;white-space:nowrap">Time</th>
+              <th style="text-align:left;padding:11px 16px;font:500 12px Inter;color:#9A9A95">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #F0F0EF">
+              <td style="padding:12px 16px;font:500 13px Inter;color:#1A1A1A;white-space:nowrap">fleek_pipeline_2026-06-11.csv</td>
+              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280">30 added · 18 updated · 7 merged · 0 skipped</td>
+              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280;white-space:nowrap">Pipeline CSV</td>
+              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280;white-space:nowrap">Today 08:14</td>
+              <td style="padding:12px 16px"><span style="font:500 13px Inter;color:#6B7280;cursor:pointer">Download</span></td>
+            </tr>
+            <tr style="border-bottom:1px solid #F0F0EF">
+              <td style="padding:12px 16px;font:500 13px Inter;color:#1A1A1A;white-space:nowrap">fleek_pipeline_2026-06-10.csv</td>
+              <td style="padding:12px 16px;font:italic 400 13px Inter;color:#9A9A95">Same file — already processed</td>
+              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280;white-space:nowrap">Pipeline CSV</td>
+              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280;white-space:nowrap">Yesterday 08:02</td>
+              <td style="padding:12px 16px"><span style="font:500 13px Inter;color:#6B7280;cursor:pointer">Download</span></td>
+            </tr>
+            <tr>
+              <td style="padding:12px 16px;font:500 13px Inter;color:#1A1A1A;white-space:nowrap">fleek_pipeline_2026-06-09.csv</td>
+              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280">12 added · 5 updated · 2 merged · 0 skipped</td>
+              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280;white-space:nowrap">Pipeline CSV</td>
+              <td style="padding:12px 16px;font:400 13px Inter;color:#6B7280;white-space:nowrap">2 days ago 08:31</td>
+              <td style="padding:12px 16px"><span style="font:500 13px Inter;color:#6B7280;cursor:pointer">Download</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-      <!-- accounts -->
+      <!-- 4. Instagram accounts -->
       <div style="font:600 15px Inter;color:#1A1A1A;margin:32px 0 12px">Instagram accounts</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <sc-for list="{{ adminAccounts }}" as="acc" hint-placeholder-count="3">
@@ -407,11 +427,20 @@
             </sc-if>
           </div>
         </sc-for>
-        <div onClick="{{ admin.addAccount }}" style="border:1.5px dashed #D9D9D5;border-radius:12px;padding:15px 16px;display:flex;align-items:center;justify-content:center;min-height:90px;cursor:pointer;font:500 14px Inter;color:#9A9A95">+ Add account</div>
+        <sc-if value="{{ admin.showAddForm }}">
+          <div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);padding:15px 16px">
+            <div style="font:500 13px Inter;color:#6B7280;margin-bottom:8px">Instagram handle</div>
+            <input onInput="{{ admin.handleInput }}" value="{{ admin.newHandle }}" placeholder="@fleek_new_account" style="width:100%;border:1px solid #E4E4E2;border-radius:8px;padding:8px 12px;font:400 14px Inter;color:#1A1A1A;outline:none" />
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button onClick="{{ admin.saveAccount }}" style="background:#1A1A1A;color:#fff;border:none;border-radius:8px;padding:8px 14px;font:500 13px Inter;cursor:pointer">Save</button>
+              <button onClick="{{ admin.cancelAdd }}" style="background:none;border:none;color:#9A9A95;font:500 13px Inter;cursor:pointer;padding:8px 0">Cancel</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ admin.showAddBtn }}">
+          <div onClick="{{ admin.addAccount }}" style="border:1.5px dashed #D9D9D5;border-radius:12px;padding:15px 16px;display:flex;align-items:center;justify-content:center;min-height:90px;cursor:pointer;font:500 14px Inter;color:#9A9A95">+ Add account</div>
+        </sc-if>
       </div>
-      <sc-if value="{{ admin.added2 }}">
-        <div style="font:400 13px Inter;color:#6B7280;margin-top:12px">New account queued — it grows tomorrow's DM pool.</div>
-      </sc-if>
     </sc-if>
 
   </div>
